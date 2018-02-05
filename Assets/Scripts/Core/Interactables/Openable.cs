@@ -2,9 +2,12 @@
 using UnityEngine;
 
 
-public class Lever : UsableObject {
+
+public class Openable : UsableObject {
+
 
 	private	Animator	m_Animator	= null;
+	private	AINode		m_AINode	= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -14,6 +17,10 @@ public class Lever : UsableObject {
 		base.Start();
 
 		m_Animator	= GetComponent<Animator>();
+		m_AINode	= GetComponentInChildren<AINode>();
+
+		if ( m_IsActivated	== false )
+			m_AINode.IsWalkable = false;
 	}
 
 
@@ -24,12 +31,14 @@ public class Lever : UsableObject {
 		if ( m_IsActive == false )
 			return;
 
-		if ( m_IsActivated == false )
+		if ( m_IsActivated  == false )
 		{
 			m_Animator.Play( "OnAction" );
 
 			if ( m_OnUse != null && m_OnUse.GetPersistentEventCount() > 0 )
 				m_OnUse.Invoke();
+
+			m_AINode.IsWalkable = true;
 		}
 		else
 		{
@@ -37,8 +46,11 @@ public class Lever : UsableObject {
 
 			if ( m_OnReset != null && m_OnReset.GetPersistentEventCount() > 0 )
 				m_OnReset.Invoke();
+
+			m_AINode.IsWalkable = false;
 		}
 
 		m_IsActivated = !m_IsActivated;
 	}
+
 }

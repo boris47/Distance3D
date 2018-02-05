@@ -2,6 +2,7 @@
 using UnityEngine;
 
 public class HighLighter : MonoBehaviour {
+	
 
 	public	void	Highlight()
 	{

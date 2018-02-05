@@ -6,6 +6,14 @@ using UnityEngine;
 [RequireComponent( typeof ( HighLighter ) )]
 public abstract class Interactable : MonoBehaviour {
 
+	[ SerializeField ]
+	protected	bool						m_IsInteractable		= true;
+	public		bool						IsInteractable
+	{
+		get { return m_IsInteractable; }
+		set { m_IsInteractable = value; }
+	}
+
 	private	HighLighter m_HighLighter = null;
 
 
@@ -16,11 +24,6 @@ public abstract class Interactable : MonoBehaviour {
 		m_HighLighter = GetComponent<HighLighter>();
 	}
 
-
-	//////////////////////////////////////////////////////////////////////////
-	// OnInteraction ( abstract )
-	public	abstract	void	OnInteraction();
-
 	
 	//////////////////////////////////////////////////////////////////////////
 	// UNITY
@@ -30,6 +33,9 @@ public abstract class Interactable : MonoBehaviour {
 	// OnMouseEnter
 	protected	virtual void OnMouseEnter()
 	{
+		if ( m_IsInteractable == false )
+			return;
+
 		CameraControl.Instance.CurrentInteractable = this;
 		m_HighLighter.Highlight();
 	}
@@ -39,6 +45,9 @@ public abstract class Interactable : MonoBehaviour {
 	// OnMouseExit
 	protected	virtual void OnMouseExit()
 	{
+		if ( m_IsInteractable == false )
+			return;
+
 		CameraControl.Instance.CurrentInteractable = null;
 		m_HighLighter.Unhighlight();
 	}

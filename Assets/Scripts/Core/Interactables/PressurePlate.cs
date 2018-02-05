@@ -1,19 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿
 using UnityEngine;
 
 
-public class PressurePlate : InteractableAINode {
+public class PressurePlate : UsableObject {
 
-	[ SerializeField ]
-	private	GameEvent	OnUse		= null;
-
-	[ SerializeField ]
-	private	GameEvent	OnReset		= null;
-
-	private	bool		m_Used		= false;
-	private	Animator	m_Animator	= null;
-
+	private	Animator	m_Animator		= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -36,22 +27,25 @@ public class PressurePlate : InteractableAINode {
 	// OnPlateInteraction
 	public	void	OnPlateInteraction()
 	{
-		if ( m_Used == false )
+		if ( m_IsActive == false )
+			return;
+
+		if ( m_IsActivated == false )
 		{
 			m_Animator.Play( "OnAction" );
 
-			if ( OnUse != null && OnUse.GetPersistentEventCount() > 0 )
-				OnUse.Invoke();
+			if ( m_OnUse != null && m_OnUse.GetPersistentEventCount() > 0 )
+				m_OnUse.Invoke();
 		}
 		else
 		{
 			m_Animator.Play( "OnReset" );
 
-			if ( OnReset != null && OnReset.GetPersistentEventCount() > 0 )
-				OnReset.Invoke();
+			if ( m_OnReset != null && m_OnReset.GetPersistentEventCount() > 0 )
+				m_OnReset.Invoke();
 		}
 
-		m_Used = !m_Used;
+		m_IsActivated = !m_IsActivated;
 	}
 
 

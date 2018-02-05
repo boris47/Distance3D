@@ -22,7 +22,6 @@ GameObject:
   - component: {fileID: 33078775651636656}
   - component: {fileID: 65067780075270496}
   - component: {fileID: 23859424629148836}
-  - component: {fileID: 114129357045418052}
   - component: {fileID: 114235327440724910}
   - component: {fileID: 114115760795006466}
   m_Layer: 0
@@ -39,7 +38,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1806696795189716}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -11.42, y: -1.153, z: 10.7}
+  m_LocalPosition: {x: -2.42, y: -1.153, z: -1.3000011}
   m_LocalScale: {x: 1, y: 0.099999994, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -107,20 +106,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5ec5a9febee7044fbea6a5ffceac772, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &114129357045418052
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1806696795189716}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c1f0e6374a025c4088f253409a5845b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cost: 3.4028235e+38
-  heuristic: 0
-  Neighbours: []
+  m_IsInteractable: 1
+  m_OnUse:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: GameEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_OnReset:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: GameEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_IsActive: 1
+  m_IsActivated: 0
 --- !u!114 &114235327440724910
 MonoBehaviour:
   m_ObjectHideFlags: 1

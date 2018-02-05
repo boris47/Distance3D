@@ -31,7 +31,14 @@ public partial class CameraControl : ICameraControl {
 			}
 
 
-			if ( CurrentInteractable is InteractableAINode )
+			if ( CurrentInteractable is GenericPlate )
+			{
+				if ( Player.CurrentPlayer != null )
+					Player.CurrentPlayer.Move( CurrentInteractable );
+				return;
+			}
+
+			if ( CurrentInteractable is UsableObject )
 			{
 				if ( Player.CurrentPlayer != null )
 					Player.CurrentPlayer.Move( CurrentInteractable );
@@ -39,7 +46,10 @@ public partial class CameraControl : ICameraControl {
 			}
 
 			// Player selection
-			CurrentInteractable.OnInteraction();
+			if ( CurrentInteractable is Player )
+			{
+				( CurrentInteractable as Player ).OnInteraction();
+			}
 			
 		}
 	}

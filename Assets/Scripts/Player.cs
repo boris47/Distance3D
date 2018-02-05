@@ -10,9 +10,10 @@ public class Player : Interactable {
 	public	float			m_Speed						= 2f;
 	
 
-	private struct Navigation {
+	private struct Navigation
+	{
 		public	bool					HasPath;
-		public	InteractableAINode[]	Path;
+		public	AINode[]				Path;
 		public	int						NodeIdx;
 		public	System.Action			Action;
 	}
@@ -33,7 +34,7 @@ public class Player : Interactable {
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( Override )
-	public override void OnInteraction()
+	public void OnInteraction()
 	{
 		if ( CameraControl.Instance.Target != null && CameraControl.Instance.Target != transform )
 			CameraControl.Instance.Target = transform;
@@ -48,13 +49,13 @@ public class Player : Interactable {
 	public	void	Move( Interactable interactable )
 	{
 		// start node
-		InteractableAINode startNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
+		AINode startNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
 
 		// final node
-		InteractableAINode finalNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
+		AINode finalNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
 
 		// path finding
-		InteractableAINode[] path	= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, finalNode );
+		AINode[] path	= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, finalNode );
 
 		if ( path == null || path.Length < 1 )
 		{
@@ -67,17 +68,23 @@ public class Player : Interactable {
 
 		m_Movement = new Navigation();
 
-		if ( interactable is Lever )
+		if ( interactable is Lever || interactable is Openable )
 		{
 			path[ path.Length - 1 ] = null;
 		}
 
-		m_Movement.Action = delegate { interactable.OnInteraction(); };
+		m_Movement.Action = delegate { CheckForUsage( interactable ); };
 		m_Movement.Path = path;
 		m_Movement.NodeIdx = 0;
 		m_Movement.HasPath = true;
 	}
 
+
+	private	void	CheckForUsage( Interactable interactable )
+	{
+		if ( interactable is UsableObject )
+			( interactable as UsableObject ).OnInteraction();
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// UNITY

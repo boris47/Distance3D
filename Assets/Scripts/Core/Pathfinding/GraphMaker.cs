@@ -9,7 +9,7 @@ namespace AI.Pathfinding
 
 		public	static	GraphMaker		Instance			= null;
 
-		private	InteractableAINode[]	Nodes				= null;
+		private	AINode[]				Nodes				= null;
 		private	float					scanRadius			= 1.1f;
 
 
@@ -22,19 +22,19 @@ namespace AI.Pathfinding
 			Instance = this;
 
 			// Find all nodes
-			Nodes = FindObjectsOfType<InteractableAINode>();
+			Nodes = FindObjectsOfType<AINode>();
 
 			Debug.Log( "Nodes: " + Nodes.Length );
 
 			// neighbours setup
 			foreach ( IAINode node in Nodes )
 			{
-				InteractableAINode interactable = node as InteractableAINode;
+				AINode interactable = node as AINode;
 				node.Neighbours = System.Array.FindAll
 				( 
 					Nodes, 
 					n => ( n.transform.position - interactable.transform.position ).sqrMagnitude <= scanRadius * scanRadius &&
-					n != (InteractableAINode)node
+					n != (AINode)node
 				);
 			}
 		}
@@ -42,12 +42,12 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// GetNearestNode
-		public	InteractableAINode	GetNearestNode( Vector3 position )
+		public	AINode	GetNearestNode( Vector3 position )
 		{
 			float currentDistance = float.MaxValue;
-			InteractableAINode result = null;
+			AINode result = null;
 
-			foreach ( InteractableAINode node in Nodes )
+			foreach ( AINode node in Nodes )
 			{
 				float distance = ( node.transform.position - position ).sqrMagnitude;
 				if ( distance < currentDistance * currentDistance )
