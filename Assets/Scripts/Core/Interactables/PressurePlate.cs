@@ -4,6 +4,11 @@ using UnityEngine;
 
 public class PressurePlate : UsableObject {
 
+	[Header("Pressure Plate Settings")]
+
+	[ SerializeField ]
+	private	bool		m_TriggerOnce	= false;
+
 	private	Animator	m_Animator		= null;
 
 
@@ -19,7 +24,7 @@ public class PressurePlate : UsableObject {
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( Override )
-	public override void OnInteraction()
+	public override void OnInteraction( Player player )
 	{}
 
 
@@ -35,14 +40,14 @@ public class PressurePlate : UsableObject {
 			m_Animator.Play( "OnAction" );
 
 			if ( m_OnUse != null && m_OnUse.GetPersistentEventCount() > 0 )
-				m_OnUse.Invoke();
+				m_OnUse.Invoke( null );
 		}
 		else
 		{
 			m_Animator.Play( "OnReset" );
 
 			if ( m_OnReset != null && m_OnReset.GetPersistentEventCount() > 0 )
-				m_OnReset.Invoke();
+				m_OnReset.Invoke( null );
 		}
 
 		m_IsActivated = !m_IsActivated;
@@ -66,6 +71,9 @@ public class PressurePlate : UsableObject {
 	// OnTriggerExit
 	private void OnTriggerExit( Collider other )
 	{
+		if ( m_TriggerOnce == true )
+			return;
+
 		if ( other.GetComponent<Player>() != null )
 			OnPlateInteraction();
 	}

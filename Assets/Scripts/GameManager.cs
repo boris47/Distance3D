@@ -2,7 +2,7 @@
 using System.Collections;
 
 [System.Serializable]
-public class GameEvent      : UnityEngine.Events.UnityEvent { }
+public class GameEvent      : UnityEngine.Events.UnityEvent<GameObject> { }
 
 public class GameManager : MonoBehaviour {
 

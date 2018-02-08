@@ -10,6 +10,15 @@ public class Player : Interactable {
 	public	float			m_Speed						= 2f;
 	
 
+	// INTERACTION
+	private	bool			HasOverrideState
+	{
+		get; set;
+	}
+
+
+
+	// NAVIGATION
 	private struct Navigation
 	{
 		public	bool					HasPath;
@@ -18,10 +27,8 @@ public class Player : Interactable {
 		public	System.Action			Action;
 	}
 	private	Navigation		m_Movement					= default ( Navigation );
-
 	private	Vector3			m_MovementStartPosition		= Vector3.zero;
 	private	float			m_MovementInterpolant		= 0f;
-
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -41,6 +48,14 @@ public class Player : Interactable {
 		// player selection
 		CurrentPlayer = this;
 
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// MoveOnPlatform
+	public	void	MoveOnPlatform( Platform platform )
+	{
+		HasOverrideState = true;
 	}
 
 
@@ -80,11 +95,14 @@ public class Player : Interactable {
 	}
 
 
+	//////////////////////////////////////////////////////////////////////////
+	// CheckForUsage
 	private	void	CheckForUsage( Interactable interactable )
 	{
 		if ( interactable is UsableObject )
-			( interactable as UsableObject ).OnInteraction();
+			( interactable as UsableObject ).OnInteraction( this );
 	}
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// UNITY

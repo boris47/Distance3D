@@ -31,7 +31,7 @@ public partial class CameraControl : ICameraControl {
 			}
 
 
-			if ( CurrentInteractable is GenericPlate )
+			if ( CurrentInteractable is AINode )
 			{
 				if ( Player.CurrentPlayer != null )
 					Player.CurrentPlayer.Move( CurrentInteractable );

@@ -27,16 +27,24 @@ namespace AI.Pathfinding
 			Debug.Log( "Nodes: " + Nodes.Length );
 
 			// neighbours setup
-			foreach ( IAINode node in Nodes )
+			foreach ( AINode node in Nodes )
 			{
-				AINode interactable = node as AINode;
-				node.Neighbours = System.Array.FindAll
-				( 
-					Nodes, 
-					n => ( n.transform.position - interactable.transform.position ).sqrMagnitude <= scanRadius * scanRadius &&
-					n != (AINode)node
-				);
+				UpdaeNeighbours( node );
 			}
+		}
+
+
+		//////////////////////////////////////////////////////////////////////////
+		// UpdaeNeighbours
+		public	void	UpdaeNeighbours( AINode node )
+		{
+			AINode interactable = node as AINode;
+			( node as IAINode ).Neighbours = System.Array.FindAll
+			( 
+				Nodes, 
+				n => ( n.transform.position - interactable.transform.position ).sqrMagnitude <= scanRadius * scanRadius &&
+				n != (AINode)node
+			);
 		}
 
 

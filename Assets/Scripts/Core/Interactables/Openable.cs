@@ -23,7 +23,6 @@ public class Openable : UsableObject {
 			m_AINode.IsWalkable = false;
 	}
 
-
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( Override )
 	public override void OnInteraction()
@@ -36,7 +35,7 @@ public class Openable : UsableObject {
 			m_Animator.Play( "OnAction" );
 
 			if ( m_OnUse != null && m_OnUse.GetPersistentEventCount() > 0 )
-				m_OnUse.Invoke();
+				m_OnUse.Invoke( null );
 
 			m_AINode.IsWalkable = true;
 		}
@@ -45,12 +44,19 @@ public class Openable : UsableObject {
 			m_Animator.Play( "OnReset" );
 
 			if ( m_OnReset != null && m_OnReset.GetPersistentEventCount() > 0 )
-				m_OnReset.Invoke();
+				m_OnReset.Invoke( null );
 
 			m_AINode.IsWalkable = false;
 		}
 
 		m_IsActivated = !m_IsActivated;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction ( Override ) ( Player Interaction )
+	public override void OnInteraction( Player player )
+	{
+
 	}
 
 }

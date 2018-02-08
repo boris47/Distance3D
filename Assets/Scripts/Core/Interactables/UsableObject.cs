@@ -29,6 +29,10 @@ public abstract class UsableObject : Interactable {
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( abstract )
-	public	abstract	void	OnInteraction();
+	public	virtual	void	OnInteraction() { }
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction ( abstract )
+	public	abstract	void	OnInteraction( Player player );
 
 }
