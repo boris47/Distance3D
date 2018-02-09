@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-/*
+
 public interface IPlatformDock {
 
 	Platform	PlatformFather	{ set; }
@@ -10,8 +10,8 @@ public interface IPlatformDock {
 
 }
 
-public class PlatformDock : UsableObject { //, IPlatformDock {
-	/*
+public class PlatformDock : UsableObject, IPlatformDock {
+	
 	private		Platform		m_PlatformFather		= null;
 	Platform	IPlatformDock.PlatformFather
 	{
@@ -31,27 +31,17 @@ public class PlatformDock : UsableObject { //, IPlatformDock {
 	// OnInteraction ( Override ) ( Player Interaction )
 	public override void OnInteraction( Player player )
 	{
-		// player is on dock, link to platform if is there
-		if ( m_HasPlatformAttached )
-		{
-			// move player on platform
-			m_PlatformFather.OnPlayerArrivedOnDock( this );
-			player.Move( m_PlatformFather );
-		}
-		else
-		{
-			// nothing
-		}
+		print("received");
+		if ( m_HasPlatformAttached == false && m_PlatformFather.IsMoving == false )
+			m_PlatformFather.MovePlatform();
 	}
 
-	
 	//////////////////////////////////////////////////////////////////////////
-	// OnInteraction ( Override )
+	// OnInteraction ( Override ) ( From Camera Interaction )
 	public override void OnInteraction()
 	{
-
 	}
 
 }
 
-	*/
+	

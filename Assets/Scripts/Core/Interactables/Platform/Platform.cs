@@ -2,132 +2,220 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Platform : AINode {
+public class Platform : AINode, IUsableObject {
 
-	public	float	m_Speed = 0f;
+	public	float			m_Speed					= 0f;
 
+
+	private	PlatformDock	m_Dock1					= null;
+	private	PlatformDock	m_Dock2					= null;
+	private	Transform		m_Plate					= null;
+
+
+	// PLATFORM MOVEMENT
+	private	enum MotionType {
+		LINEAR, LERPED
+	}
 	[ SerializeField ]
-	private	Transform[]	m_WayPoints			= null;
+	private	MotionType	m_InterpolationType			= MotionType.LINEAR;
 
-	[ SerializeField ][ Range( 2, 4 ) ]
-	private	int			m_InterpolationStep	= 2;
+	public	bool		IsMoving
+	{
+		get; set;
+	}
+	private	Vector3		m_NextWaypoint				= Vector3.zero;
+	private	Vector3		m_CurrentPosition			= Vector3.zero;
+	private	int			m_CurrentWaypointIdx		= 0;
+	private	float		m_InterpolantGlobal			= 0f;
+	[SerializeField]
+	List<Vector3>		m_WaypointsPositions		= null;
 
-	private	bool		m_IsMoving			= false;
-	private	int			m_WaypointsMovStep	= 0;
-	private	Vector3[]	m_CurrentWaypoints	= null;
-	private	float		m_Interpolant		= 0f;
-	private	bool		m_HasArrived		= true;
 
-	// On transition end
-	//		AI.Pathfinding.GraphMaker.Instance.UpdaeNeighbours( this );
 
+
+	//////////////////////////////////////////////////////////////////////////
+	// AWAKE
 	private void Awake()
 	{
-		m_HasArrived = false;
-		SetNextWaypoints();
+
+		m_Dock1 = transform.parent.Find( "Dock1" ).GetComponent<PlatformDock>();
+		m_Dock2 = transform.parent.Find( "Dock2" ).GetComponent<PlatformDock>();
+		m_Plate	= transform.parent.Find( "Plate" );
+		Transform waypointsContainer = transform.parent.Find( "WayPoints" );
+
+		if ( waypointsContainer.childCount < 1 && m_InterpolationType == MotionType.LERPED )
+		{
+			print( "Platform " + name + " cannot have lerped motion because non enough waypoints, minimal is 4 waypoints... \n setting to linear" );
+			m_InterpolationType	 = MotionType.LINEAR;
+		}
+
+		m_WaypointsPositions.Add( m_Dock1.transform.position );
+		m_WaypointsPositions.Add( m_Dock1.transform.position );
+//		print( "added " + m_Dock1.name );
+		foreach ( Transform t in waypointsContainer )
+		{
+			m_WaypointsPositions.Add( t.position );
+//			print( "added " + t.name );
+		}
+		m_WaypointsPositions.Add( m_Dock2.transform.position );
+		m_WaypointsPositions.Add( m_Dock2.transform.position );
+//		print( "added " + m_Dock2.name );
+
+
+		( m_Dock1 as IPlatformDock ).PlatformFather = this;
+		( m_Dock2 as IPlatformDock ).PlatformFather = this;
+
+		( m_Dock1 as IPlatformDock ).Attached = true;
+		( m_Dock2 as IPlatformDock ).Attached = false;
 	}
 
 
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction From IUsableObject
+	void IUsableObject.OnInteraction( Player player )
+	{
+		if ( player == null )
+			return;
+
+		player.transform.SetParent( transform );
+		MovePlatform();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// MovePlatform
+	public	void	MovePlatform()
+	{
+		if ( IsMoving == true )
+			return;
+
+		if ( m_InterpolationType == MotionType.LINEAR )
+		{
+			m_CurrentWaypointIdx = 0;
+			SetNextWaypoints();
+		}
+
+		IsMoving = true;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnPathCompleted
+	private	void	OnPathCompleted()
+	{
+		AI.Pathfinding.GraphMaker.Instance.UpdaeNeighbours( this );
+		m_InterpolantGlobal = 0f;
+		m_CurrentWaypointIdx = 0;
+		IsMoving = false;
+		m_WaypointsPositions.Reverse();
+		( m_Dock1 as IPlatformDock ).Attached = !( m_Dock1 as IPlatformDock ).Attached;
+		( m_Dock2 as IPlatformDock ).Attached = !( m_Dock2 as IPlatformDock ).Attached;
+		if ( transform.childCount > 0 )
+			transform.GetChild(0).SetParent( null );
+	}
 	
-	public	bool	SetNextWaypoints()
+
+	//////////////////////////////////////////////////////////////////////////
+	// SetNextWaypoints
+	private	void	SetNextWaypoints()
 	{
-		print( m_WaypointsMovStep + m_InterpolationStep );
-
-		if ( m_WaypointsMovStep + m_InterpolationStep > m_WayPoints.Length )
-			return false;
-
-		if ( m_InterpolationStep == 2 )
+//		print( m_CurrentWaypointIdx );
+		if ( m_CurrentWaypointIdx == m_WaypointsPositions.Count )
 		{
-			m_CurrentWaypoints = new Vector3[] {
-				transform.position,
-				m_WayPoints[m_WaypointsMovStep].position,
-			};
+			OnPathCompleted();
+			return;
 		}
 
-		if ( m_InterpolationStep ==  3 )
-		{
-			m_CurrentWaypoints = new Vector3[] {
-				transform.position,
-				m_WayPoints[m_WaypointsMovStep].position,
-				m_WayPoints[m_WaypointsMovStep + 1].position,
-			};
-		}
+		m_CurrentPosition	= transform.position;
+		m_NextWaypoint		= m_WaypointsPositions[m_CurrentWaypointIdx];
 
-		if ( m_InterpolationStep ==  4 )
-		{
-			m_CurrentWaypoints = new Vector3[] {
-				transform.position,
-				m_WayPoints[m_WaypointsMovStep].position,
-				m_WayPoints[m_WaypointsMovStep + 1].position,
-				m_WayPoints[m_WaypointsMovStep + 2].position,
-			};
-		}
-
-		m_WaypointsMovStep ++;;
-		return true;
-	}
-	
-
-	public	bool	MoveAlongWayPoints()
-	{
-		if ( m_Interpolant >= 1f )
-		{
-			m_Interpolant = 0f;
-			m_IsMoving = false;
-			return false;
-		}
-
-		m_Interpolant += Time.deltaTime * m_Speed;
-
-		if ( m_InterpolationStep == 2 )
-		{
-			Vector3 a = m_CurrentWaypoints[0];
-			Vector3 b = m_CurrentWaypoints[1];
-
-			Vector3 position = Vector3.Lerp( a, b, m_Interpolant );
-			transform.position = position;
-		}
-
-		if ( m_InterpolationStep == 3 )
-		{
-			Vector3 a = m_CurrentWaypoints[0];
-			Vector3 b = m_CurrentWaypoints[1];
-			Vector3 c = m_CurrentWaypoints[2];
-
-			Vector3 position = QuadraticLerp( a, b, c, m_Interpolant );
-			transform.position = position;
-		}
-
-		if ( m_InterpolationStep == 4 )
-		{
-			Vector3 a = m_CurrentWaypoints[0];
-			Vector3 b = m_CurrentWaypoints[1];
-			Vector3 c = m_CurrentWaypoints[2];
-			Vector3 d = m_CurrentWaypoints[3];
-
-			Vector3 position = CubicLerp( a, b, c, d, m_Interpolant );
-			transform.position = position;
-		}
-
-		return true;
+		m_CurrentWaypointIdx ++;
 	}
 
 
-	private void Update()
+	//////////////////////////////////////////////////////////////////////////
+	// Move
+	private	void	Move()
 	{
-
-		if ( m_HasArrived == false && MoveAlongWayPoints() == false )
+		// LINEAR
+		if ( m_InterpolationType == MotionType.LINEAR )
 		{
-			if ( SetNextWaypoints() == false )
+			m_InterpolantGlobal += Time.deltaTime * m_Speed;
+			Vector3 position = Vector3.Lerp( m_CurrentPosition, m_NextWaypoint, m_InterpolantGlobal );
+			transform.position = position;
+
+			if ( m_InterpolantGlobal >= 1f )
 			{
-				m_HasArrived = true;
-				print( "arrived" );
+				m_InterpolantGlobal = 0f;
+				SetNextWaypoints();
 			}
 		}
 
+		// LERPED
+		if ( m_InterpolationType == MotionType.LERPED )
+		{
+			m_InterpolantGlobal += Time.deltaTime * m_Speed * 0.1f;
+			Vector3 position = Interp( m_WaypointsPositions, m_InterpolantGlobal );
+			transform.position = position;
+
+			if ( m_InterpolantGlobal >= 1f )
+			{
+				m_InterpolantGlobal = 0f;
+				OnPathCompleted();
+			}
+		}
 	}
 
 
+	//////////////////////////////////////////////////////////////////////////
+	// UNITY
+	//////////////////////////////////////////////////////////////////////////
+
+	//////////////////////////////////////////////////////////////////////////
+	// Update
+	private void Update()
+	{
+		if ( IsMoving == true )
+		{
+			Move();
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+	private Vector3 Interp( List<Vector3> wayPoints, float t )
+	{
+		int numSections = wayPoints.Count - 3;
+		int currPt = Mathf.Min(Mathf.FloorToInt(t * (float) numSections), numSections - 1);
+		float u = t * (float) numSections - (float) currPt;
+				
+		Vector3 a = wayPoints[ currPt + 0 ];
+		Vector3 b = wayPoints[ currPt + 1 ];
+		Vector3 c = wayPoints[ currPt + 2 ];
+		Vector3 d = wayPoints[ currPt + 3 ];
+		
+		return .5f * 
+		(
+			( -a + 3f * b - 3f * c + d )		* ( u * u * u ) +
+			( 2f * a - 5f * b + 4f * c - d )	* ( u * u ) +
+			( -a + c )							* u +
+			2f * b
+		);
+	}
 
 
 

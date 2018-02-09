@@ -63,7 +63,12 @@ public class PressurePlate : UsableObject {
 	private void OnTriggerEnter( Collider other )
 	{
 		if ( other.GetComponent<Player>() != null )
+		{
 			OnPlateInteraction();
+
+			if ( m_TriggerOnce == true )
+				m_IsActive = m_IsInteractable = false;
+		}
 	}
 
 
@@ -71,8 +76,6 @@ public class PressurePlate : UsableObject {
 	// OnTriggerExit
 	private void OnTriggerExit( Collider other )
 	{
-		if ( m_TriggerOnce == true )
-			return;
 
 		if ( other.GetComponent<Player>() != null )
 			OnPlateInteraction();

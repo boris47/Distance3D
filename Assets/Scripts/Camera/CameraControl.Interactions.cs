@@ -30,8 +30,13 @@ public partial class CameraControl : ICameraControl {
 				return;
 			}
 
+			if ( CurrentInteractable is IUsableObject )
+			{
+				( CurrentInteractable as IUsableObject ).OnInteraction( Player.CurrentPlayer );
+				return;
+			}
 
-			if ( CurrentInteractable is AINode )
+			if ( CurrentInteractable is AI.Pathfinding.IAINode )
 			{
 				if ( Player.CurrentPlayer != null )
 					Player.CurrentPlayer.Move( CurrentInteractable );
@@ -44,6 +49,8 @@ public partial class CameraControl : ICameraControl {
 					Player.CurrentPlayer.Move( CurrentInteractable );
 				return;
 			}
+
+
 
 			// Player selection
 			if ( CurrentInteractable is Player )

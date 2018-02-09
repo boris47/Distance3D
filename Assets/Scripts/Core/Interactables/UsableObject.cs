@@ -2,7 +2,13 @@
 using System;
 using UnityEngine;
 
-public abstract class UsableObject : Interactable {
+public interface IUsableObject {
+
+	void	OnInteraction( Player player );
+
+}
+
+public abstract class UsableObject : Interactable, IUsableObject {
 
 	[ SerializeField ]
 	protected	GameEvent					m_OnUse				= null;
@@ -29,7 +35,7 @@ public abstract class UsableObject : Interactable {
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( abstract )
-	public	virtual	void	OnInteraction() { }
+	public	virtual		void	OnInteraction() { }
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( abstract )
