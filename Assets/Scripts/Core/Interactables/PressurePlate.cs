@@ -7,9 +7,9 @@ public class PressurePlate : UsableObject {
 	[Header("Pressure Plate Settings")]
 
 	[ SerializeField ]
-	private	bool		m_TriggerOnce	= false;
+	private	bool		m_TriggerOnce			= false;
 
-	private	Animator	m_Animator		= null;
+	private	Animator	m_Animator				= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -23,14 +23,16 @@ public class PressurePlate : UsableObject {
 
 
 	//////////////////////////////////////////////////////////////////////////
-	// OnInteraction ( Override )
-	public override void OnInteraction( Player player )
-	{}
+	// OnEndAnimation
+	public	void	OnEndAnimation()
+	{
+		m_IsActive = true;
+	}
 
 
 	//////////////////////////////////////////////////////////////////////////
-	// OnPlateInteraction
-	public	void	OnPlateInteraction()
+	// OnInteractionInternal
+	public	void	OnInteractionInternal()
 	{
 		if ( m_IsActive == false )
 			return;
@@ -51,6 +53,22 @@ public class PressurePlate : UsableObject {
 		}
 
 		m_IsActivated = !m_IsActivated;
+		m_IsActive = false;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction ( Override )
+	public override void OnInteraction()
+	{
+//		OnInteractionInternal();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction ( Override ) ( Player Interaction )
+	public override void OnInteraction( Player player )
+	{
+//		OnInteractionInternal();
 	}
 
 
@@ -62,12 +80,12 @@ public class PressurePlate : UsableObject {
 	// OnTriggerEnter
 	private void OnTriggerEnter( Collider other )
 	{
+		if ( m_IsActivated == true )
+			return;
+
 		if ( other.GetComponent<Player>() != null )
 		{
-			OnPlateInteraction();
-
-			if ( m_TriggerOnce == true )
-				m_IsActive = m_IsInteractable = false;
+			OnInteractionInternal();
 		}
 	}
 
@@ -76,9 +94,11 @@ public class PressurePlate : UsableObject {
 	// OnTriggerExit
 	private void OnTriggerExit( Collider other )
 	{
+		if ( m_TriggerOnce == true )
+			return;
 
 		if ( other.GetComponent<Player>() != null )
-			OnPlateInteraction();
+			OnInteractionInternal();
 	}
 
 }

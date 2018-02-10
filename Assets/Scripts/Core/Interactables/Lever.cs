@@ -2,9 +2,9 @@
 using UnityEngine;
 
 
-public class Lever : UsableObject {
+public class Lever : UsableObject, IUsableObject {
 
-	private	Animator	m_Animator	= null;
+	private	Animator	m_Animator				= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -18,8 +18,16 @@ public class Lever : UsableObject {
 
 
 	//////////////////////////////////////////////////////////////////////////
-	// OnInteraction ( Override )
-	public override void OnInteraction()
+	// OnEndAnimation
+	public	void	OnEndAnimation()
+	{
+		m_IsActive = true;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteractionInternal
+	public void OnInteractionInternal()
 	{
 		if ( m_IsActive == false )
 			return;
@@ -34,18 +42,25 @@ public class Lever : UsableObject {
 		else
 		{
 			m_Animator.Play( "OnReset" );
-
 			if ( m_OnReset != null && m_OnReset.GetPersistentEventCount() > 0 )
 				m_OnReset.Invoke( null );
 		}
 
+		m_IsActive = false;
 		m_IsActivated = !m_IsActivated;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction ( Override )
+	public override void OnInteraction()
+	{
+		OnInteractionInternal();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( Override ) ( Player Interaction )
 	public override void OnInteraction( Player player )
 	{
-
+		OnInteractionInternal();
 	}
 }

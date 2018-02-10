@@ -29,13 +29,13 @@ public partial class CameraControl : ICameraControl {
 				Player.CurrentPlayer = null;
 				return;
 			}
-
+			/*
 			if ( CurrentInteractable is IUsableObject )
 			{
 				( CurrentInteractable as IUsableObject ).OnInteraction( Player.CurrentPlayer );
 				return;
 			}
-
+			*/
 			if ( CurrentInteractable is AI.Pathfinding.IAINode )
 			{
 				if ( Player.CurrentPlayer != null )

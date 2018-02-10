@@ -1,8 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Platform : AINode, IUsableObject {
+public class Platform : AINode {
 
 	public	float			m_Speed					= 0f;
 
@@ -29,6 +30,8 @@ public class Platform : AINode, IUsableObject {
 	private	float		m_InterpolantGlobal			= 0f;
 	[SerializeField]
 	List<Vector3>		m_WaypointsPositions		= null;
+
+	private	Player		m_AttachedPlayer			= null;
 
 
 
@@ -61,6 +64,8 @@ public class Platform : AINode, IUsableObject {
 		m_WaypointsPositions.Add( m_Dock2.transform.position );
 //		print( "added " + m_Dock2.name );
 
+		// set platform porition on Dock 1
+		transform.position = new Vector3( m_Dock1.transform.position.x, transform.position.y, m_Dock1.transform.position.z );
 
 		( m_Dock1 as IPlatformDock ).PlatformFather = this;
 		( m_Dock2 as IPlatformDock ).PlatformFather = this;
@@ -69,17 +74,6 @@ public class Platform : AINode, IUsableObject {
 		( m_Dock2 as IPlatformDock ).Attached = false;
 	}
 
-
-	//////////////////////////////////////////////////////////////////////////
-	// OnInteraction From IUsableObject
-	void IUsableObject.OnInteraction( Player player )
-	{
-		if ( player == null )
-			return;
-
-		player.transform.SetParent( transform );
-		MovePlatform();
-	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// MovePlatform
@@ -102,15 +96,30 @@ public class Platform : AINode, IUsableObject {
 	// OnPathCompleted
 	private	void	OnPathCompleted()
 	{
-		AI.Pathfinding.GraphMaker.Instance.UpdaeNeighbours( this );
+		// Get new neighbours
+		AI.Pathfinding.GraphMaker.Instance.UpdateNeighbours( this, isUpdate: true );
+
+		// restore internal state
 		m_InterpolantGlobal = 0f;
 		m_CurrentWaypointIdx = 0;
 		IsMoving = false;
 		m_WaypointsPositions.Reverse();
+
+		// toogle docks state
 		( m_Dock1 as IPlatformDock ).Attached = !( m_Dock1 as IPlatformDock ).Attached;
 		( m_Dock2 as IPlatformDock ).Attached = !( m_Dock2 as IPlatformDock ).Attached;
-		if ( transform.childCount > 0 )
-			transform.GetChild(0).SetParent( null );
+
+		// Detach Player if found
+		Player player = transform.GetComponentInChildren<Player>();
+		if ( player != null )
+		{
+			player.transform.SetParent( null );
+			player.IsInteractable = true;
+		}
+
+		// re-set player as interactable
+		if ( Player.CurrentPlayer == null )
+			Player.CurrentPlayer = m_AttachedPlayer;
 	}
 	
 
@@ -165,6 +174,19 @@ public class Platform : AINode, IUsableObject {
 		}
 	}
 
+	
+	//////////////////////////////////////////////////////////////////////////
+	// OnNodeReached ( Override )
+	public override void OnNodeReached( Player player )
+	{
+		player.transform.SetParent( transform );
+		player.IsInteractable = false;
+		Player.CurrentPlayer = null;
+		m_AttachedPlayer = player;
+		MovePlatform();
+	}
+
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// UNITY
@@ -179,22 +201,6 @@ public class Platform : AINode, IUsableObject {
 			Move();
 		}
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	
 
 	private Vector3 Interp( List<Vector3> wayPoints, float t )
@@ -216,101 +222,4 @@ public class Platform : AINode, IUsableObject {
 			2f * b
 		);
 	}
-
-
-
-
-	private	Vector3 QuadraticLerp( Vector3 a, Vector3 b, Vector3 c, float interpolant )
-	{
-		Vector3 p0 = Vector3.Lerp( a, b, interpolant );
-		Vector3 p1 = Vector3.Lerp( b, c, interpolant );
-		return Vector3.Lerp( p0, p1, interpolant );
-	}
-
-	private	Vector3 CubicLerp( Vector3 a, Vector3 b, Vector3 c, Vector3 d, float interpolant )
-	{
-		Vector3 p0 = QuadraticLerp( a, b, c, interpolant );
-		Vector3 p1 = QuadraticLerp( b, c, d, interpolant );
-		return Vector3.Lerp( p0, p1, interpolant );
-	}
-
-
-
-	/*
-	[ SerializeField ]
-	private		float				m_MovementSpeed			= 2f;
-
-	[ SerializeField ]
-	private		PlatformDock		m_AttachedDock			= null;
-
-
-	private		PlatformDock		m_Dock1					= null;
-	private		PlatformDock		m_Dock2					= null;
-
-
-
-	private		IEnumerator			m_PlayerTransition		= null;
-
-	
-	//////////////////////////////////////////////////////////////////////////
-	// AWAKE
-	private void	Awake()
-	{
-		m_Dock1 = transform.GetChild( 0 ).GetComponent<PlatformDock>();
-		m_Dock2 = transform.GetChild( 1 ).GetComponent<PlatformDock>();
-
-		( m_Dock1 as IPlatformDock ).PlatformFather = this;
-		( m_Dock2 as IPlatformDock ).PlatformFather = this;
-
-		if ( m_AttachedDock == null )
-		{
-			( m_Dock1 as IPlatformDock ).Attached = true;
-		}
-		else
-		{
-			( m_AttachedDock as IPlatformDock ).Attached = true;
-		}
-
-		// must set platform as really dock to a dock
-
-	}
-	
-
-	//////////////////////////////////////////////////////////////////////////
-	// START
-	protected override void Start()
-	{
-//		IsInteractable = false;
-		base.Start();
-	}
-	
-	//////////////////////////////////////////////////////////////////////////
-	// OnPlayerArrivedOnDock
-	public	void	OnPlayerArrivedOnDock( PlatformDock dock )
-	{
-
-	}
-
-
-	//////////////////////////////////////////////////////////////////////////
-	// PlayerTransition ( Cooutine )
-	private	IEnumerator	PlayerTransition( PlatformDock dock )
-	{
-		// Take player control
-
-		yield return null;
-	}
-
-
-	//////////////////////////////////////////////////////////////////////////
-	// UNITY
-	//////////////////////////////////////////////////////////////////////////
-
-	//////////////////////////////////////////////////////////////////////////
-	// Update
-	private void	Update()
-	{
-		
-	}
-	*/
 }

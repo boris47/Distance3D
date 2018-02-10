@@ -10,6 +10,16 @@ namespace AI.Pathfinding
 		public	static	GraphMaker		Instance			= null;
 
 		private	AINode[]				Nodes				= null;
+		public	int						NodeCount
+		{
+			get
+			{
+				if ( Nodes != null )
+					return Nodes.Length;
+				return 0;
+			}
+		}
+
 		private	float					scanRadius			= 1.1f;
 
 
@@ -18,7 +28,6 @@ namespace AI.Pathfinding
 		// AWAKE
 		void Awake ()
 		{
-
 			Instance = this;
 
 			// Find all nodes
@@ -29,15 +38,25 @@ namespace AI.Pathfinding
 			// neighbours setup
 			foreach ( AINode node in Nodes )
 			{
-				UpdaeNeighbours( node );
+				UpdateNeighbours( node, false );
 			}
 		}
 
 
 		//////////////////////////////////////////////////////////////////////////
 		// UpdaeNeighbours
-		public	void	UpdaeNeighbours( AINode node )
+		public	void	UpdateNeighbours( AINode node, bool isUpdate )
 		{
+			if ( isUpdate == true )
+			{
+				// update previous neighbours
+				foreach( IAINode neigh in ( node as IAINode ).Neighbours )
+				{
+					UpdateNeighbours( neigh as AINode, false );
+				}
+			}
+
+			// get current neighbours
 			AINode interactable = node as AINode;
 			( node as IAINode ).Neighbours = System.Array.FindAll
 			( 
@@ -45,6 +64,15 @@ namespace AI.Pathfinding
 				n => ( n.transform.position - interactable.transform.position ).sqrMagnitude <= scanRadius * scanRadius &&
 				n != (AINode)node
 			);
+
+			if ( isUpdate == true )
+			{
+				// update previous neighbours
+				foreach( IAINode neigh in ( node as IAINode ).Neighbours )
+				{
+					UpdateNeighbours( neigh as AINode, false );
+				}
+			}
 		}
 
 
@@ -70,11 +98,12 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// ResetCosts
-		internal	void	ResetCosts()
+		internal	void	ResetNodes()
 		{
 			foreach ( IAINode node in Nodes )
 			{
-				node.Cost = float.MaxValue;
+				node.Cost	= float.MaxValue;
+				node.Parent = null;
 			}
 		}
 

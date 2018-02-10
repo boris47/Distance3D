@@ -5,30 +5,37 @@ using System;
 
 public class Player : Interactable {
 
-	public	static	Player	CurrentPlayer				= null;
+	public	static	Player[]	Players						= null;
 
-	public	float			m_Speed						= 2f;
+	public	static	Player		CurrentPlayer				= null;
+
+	public	float				m_Speed						= 2f;
+
 	
-
-	// INTERACTION
-	private	bool			HasOverrideState
-	{
-		get; set;
-	}
-
-
-
 	// NAVIGATION
+	[Serializable]
 	private struct Navigation
 	{
 		public	bool					HasPath;
 		public	AINode[]				Path;
 		public	int						NodeIdx;
-		public	System.Action			Action;
+		public	Action					Action;
+		public	Interactable			Interactable;
 	}
-	private	Navigation		m_Movement					= default ( Navigation );
-	private	Vector3			m_MovementStartPosition		= Vector3.zero;
-	private	float			m_MovementInterpolant		= 0f;
+	[ SerializeField ]
+	private	Navigation			m_Movement					= default ( Navigation );
+	private	Vector3				m_MovementStartPosition		= Vector3.zero;
+	private	float				m_MovementInterpolant		= 0f;
+	private	AINode				m_CurrentNode				= null;
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// AWAKE
+	private void Awake()
+	{
+		if ( Players == null )
+			Players = FindObjectsOfType<Player>();
+	}
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -36,6 +43,11 @@ public class Player : Interactable {
 	protected override void Start()
 	{
 		base.Start();
+
+		m_CurrentNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
+
+		float height = transform.position.y;
+		transform.position = new Vector3( m_CurrentNode.transform.position.x, height, m_CurrentNode.transform.position.z );
 	}
 
 
@@ -52,16 +64,22 @@ public class Player : Interactable {
 
 
 	//////////////////////////////////////////////////////////////////////////
-	// MoveOnPlatform
-	public	void	MoveOnPlatform( Platform platform )
+	// UpdateNavigation
+	public static void	UpdateNavigation()
 	{
-		HasOverrideState = true;
+		foreach( Player player in Players )
+		{
+			if ( player.m_Movement.HasPath == false )
+				continue;
+
+			player.Move( player.m_Movement.Interactable, true );
+		}
 	}
 
 
 	//////////////////////////////////////////////////////////////////////////
 	// Move
-	public	void	Move( Interactable interactable )
+	public	void	Move( Interactable interactable, bool checkOverride = false )
 	{
 		// start node
 		AINode startNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
@@ -69,29 +87,43 @@ public class Player : Interactable {
 		// final node
 		AINode finalNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
 
+
+		if ( (interactable is IUsableObject ) == false && (finalNode == m_CurrentNode && checkOverride == false ) )
+			return;
+
+		m_CurrentNode = finalNode;
+
 		// path finding
 		AINode[] path	= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, finalNode );
+
+		m_Movement = new Navigation();
 
 		if ( path == null || path.Length < 1 )
 		{
 			m_Movement.HasPath = false;
 			return;
+
 		}
-
-		m_MovementStartPosition = transform.position;
-		m_MovementInterpolant = 0f;
-
-		m_Movement = new Navigation();
-
 		if ( interactable is Lever || interactable is Openable )
 		{
 			path[ path.Length - 1 ] = null;
+
+			if ( path.Length == 1 && path[ path.Length - 1 ] == null )
+			{
+				CheckForUsage( interactable );
+				return;
+			}
+
 		}
 
-		m_Movement.Action = delegate { CheckForUsage( interactable ); };
+		m_Movement.HasPath = true;
 		m_Movement.Path = path;
 		m_Movement.NodeIdx = 0;
-		m_Movement.HasPath = true;
+		m_Movement.Action = delegate { CheckForUsage( interactable ); };
+		m_Movement.Interactable = interactable;
+
+		m_MovementStartPosition = transform.position;
+		m_MovementInterpolant = 0f;
 	}
 
 
@@ -112,7 +144,6 @@ public class Player : Interactable {
 	// Update
 	private	void	Update()
 	{
-
 		if ( m_Movement.HasPath == false )
 			return;
 
@@ -127,6 +158,7 @@ public class Player : Interactable {
 		}
 		else // arrived at node
 		{
+			m_Movement.Path[ m_Movement.NodeIdx ].OnNodeReached( this );
 			m_Movement.NodeIdx ++;
 
 			// Arrived
@@ -138,7 +170,7 @@ public class Player : Interactable {
 					m_Movement.Action();
 				return;
 			}
-
+			
 			m_MovementStartPosition = transform.position;
 			m_MovementInterpolant = 0f;
 		}

@@ -21,7 +21,7 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// GetBestNode
-		private	AINode	GetBestNode( AINode[] set, bool useHeuristic )
+		private	AINode	GetBestNode( IEnumerable set, bool useHeuristic )
 		{
 			IAINode bestNode = null;
 			float bestTotal = float.MaxValue;
@@ -44,74 +44,81 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// FindPath
+		private	AINode[]	RetracePath( AINode startNode, AINode endNode )
+		{
+			List<AINode> path = new List<AINode>();
+			AINode currentNode = endNode;
+			while ( currentNode != startNode )
+			{
+				path.Add( currentNode );
+				currentNode = ( currentNode as IAINode ).Parent;
+			}
+
+			path.Reverse();
+			GraphMaker.Instance.ResetNodes();
+			return path.ToArray();
+		}
+
+
+
+		//////////////////////////////////////////////////////////////////////////
+		// FindPath
 		public AINode[]	FindPath( AINode startNode, AINode endNode )
 		{
-			List<AINode> openSet	= new List<AINode>();
-			List<AINode> closedSet	= new List<AINode>();
+			HashSet<AINode> closedSet	= new HashSet<AINode>();
+			List<AINode>	openSet		= new List<AINode>();
 
 			if ( startNode.IsWalkable == false )
 				return null;
 
 			( startNode as IAINode ).Cost = 0;
 			( startNode as IAINode ).Heuristic = ( startNode.transform.position - endNode.transform.position ).sqrMagnitude;
-
 			openSet.Add( startNode );
 
+			// Start scan
 			while ( openSet.Count > 0 )
 			{
-				AINode n = GetBestNode( openSet.ToArray(), true );
+				AINode currentNode = GetBestNode( openSet, true );
 
-				if ( n == null )
-					return null;
-
-				openSet.Remove( n );
-				closedSet.Add( n );
-
-				if ( n == endNode )
+				if ( currentNode == endNode )
 				{
 				//	Debug.Log("We found the end node!");
-					break;
+					return RetracePath( startNode, endNode );
 				}
 
-
-				foreach( IAINode neigh in n.Neighbours )
-				{
-					if ( neigh.IsWalkable == false )
-						continue;
-
-					AINode interactable = neigh as AINode;
-					if ( !closedSet.Contains( interactable ) && !openSet.Contains( interactable ) )
-					{
-						neigh.Cost = n.Cost + ( interactable.transform.position - n.transform.position ).sqrMagnitude;
-						neigh.Heuristic = ( interactable.transform.position - endNode.transform.position ).sqrMagnitude;
-						openSet.Add( interactable );
-					}
-				}
-			}
-
-
-			List<AINode> bestPathList = new List<AINode>();
-
-			// Find best path
-			bestPathList.Add( endNode );
-			AINode currentNode = endNode;
-			while ( currentNode != startNode )
-			{
-				// Get the neighbours of the current node
-				AINode[] neighbours = currentNode.Neighbours;
-
-				// Find the best neighbour
-				IAINode bestNeigh = GetBestNode( neighbours, false );
-				if ( bestNeigh == null )
+				if ( currentNode == null )
 					return null;
 
-				bestPathList.Add( currentNode = ( bestNeigh as AINode ) );
+
+				// First node is always discovered
+				closedSet.Add( currentNode );
+				openSet.Remove( currentNode );
+
+				// Setup its neighbours
+				foreach( AINode neighbour in currentNode.Neighbours )
+				{
+					// Ignore the neighbor which is already evaluated.
+					if ( neighbour.IsWalkable == false || closedSet.Contains( neighbour ) )
+						continue;
+
+					IAINode INeigh = ( neighbour as IAINode );
+
+					float gCost = ( currentNode as IAINode ).Cost + ( currentNode.transform.position - neighbour.transform.position ).sqrMagnitude;
+					if ( gCost < INeigh.Cost || openSet.Contains(neighbour) == false )
+					{
+						INeigh.Cost		= gCost;
+						INeigh.Heuristic	= ( neighbour.transform.position - endNode.transform.position ).sqrMagnitude;
+						INeigh.Parent		= currentNode;
+
+						if ( openSet.Contains( neighbour ) == false )
+							openSet.Add( neighbour );
+					}
+
+				}
 			}
 
-			GraphMaker.Instance.ResetCosts();
-
-			bestPathList.Reverse();
-			return bestPathList.ToArray();
+			// no path found
+			return null;
 		}
 
 	}

@@ -3,11 +3,12 @@ using UnityEngine;
 
 
 
-public class Openable : UsableObject {
+public class Openable : UsableObject, IUsableObject {
 
 
-	private	Animator	m_Animator	= null;
-	private	AINode		m_AINode	= null;
+	private	Animator	m_Animator				= null;
+
+	private	AINode		m_AINode				= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -23,9 +24,18 @@ public class Openable : UsableObject {
 			m_AINode.IsWalkable = false;
 	}
 
+
 	//////////////////////////////////////////////////////////////////////////
-	// OnInteraction ( Override )
-	public override void OnInteraction()
+	// OnEndAnimation
+	public	void	OnEndAnimation()
+	{
+		m_IsActive = true;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteractionInternal
+	private	void	OnInteractionInternal()
 	{
 		if ( m_IsActive == false )
 			return;
@@ -49,14 +59,26 @@ public class Openable : UsableObject {
 			m_AINode.IsWalkable = false;
 		}
 
+		Player.UpdateNavigation();
+
+		m_IsActive = false;
+
 		m_IsActivated = !m_IsActivated;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction ( Override )
+	public override void OnInteraction()
+	{
+		OnInteractionInternal();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( Override ) ( Player Interaction )
 	public override void OnInteraction( Player player )
 	{
-
+		OnInteractionInternal();
 	}
 
 }

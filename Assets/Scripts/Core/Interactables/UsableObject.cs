@@ -4,11 +4,9 @@ using UnityEngine;
 
 public interface IUsableObject {
 
-	void	OnInteraction( Player player );
-
 }
 
-public abstract class UsableObject : Interactable, IUsableObject {
+public abstract class UsableObject : Interactable {
 
 	[ SerializeField ]
 	protected	GameEvent					m_OnUse				= null;
@@ -35,10 +33,12 @@ public abstract class UsableObject : Interactable, IUsableObject {
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( abstract )
+	/// <summary> Used by other game elements </summary>
 	public	virtual		void	OnInteraction() { }
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( abstract )
+	/// <summary> Used by player interaction </summary>
 	public	abstract	void	OnInteraction( Player player );
 
 }

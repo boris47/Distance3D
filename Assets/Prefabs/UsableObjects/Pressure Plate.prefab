@@ -246,7 +246,7 @@ MonoBehaviour:
     m_TypeName: GameEvent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
   m_IsActive: 1
   m_IsActivated: 0
-  m_TriggerOnce: 0
+  m_TriggerOnce: 1
 --- !u!114 &114366894726274724
 MonoBehaviour:
   m_ObjectHideFlags: 1

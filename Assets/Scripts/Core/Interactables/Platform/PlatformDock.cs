@@ -26,22 +26,30 @@ public class PlatformDock : UsableObject, IPlatformDock {
 	}
 
 
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteractionInternal
+	private	void	OnInteractionInternal()
+	{
+		if ( m_HasPlatformAttached == false && m_PlatformFather.IsMoving == false )
+			m_PlatformFather.MovePlatform();
+	}
+	
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnInteraction ( Override )
+	public override void OnInteraction()
+	{
+		OnInteractionInternal();
+	}
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// OnInteraction ( Override ) ( Player Interaction )
 	public override void OnInteraction( Player player )
 	{
-		print("received");
-		if ( m_HasPlatformAttached == false && m_PlatformFather.IsMoving == false )
-			m_PlatformFather.MovePlatform();
+		OnInteractionInternal();
 	}
-
-	//////////////////////////////////////////////////////////////////////////
-	// OnInteraction ( Override ) ( From Camera Interaction )
-	public override void OnInteraction()
-	{
-	}
-
+	
 }
 
 	

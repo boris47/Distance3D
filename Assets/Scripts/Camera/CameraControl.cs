@@ -69,13 +69,12 @@ public partial class CameraControl : MonoBehaviour, ICameraControl {
 		get;
 		private set;
 	}
-
+	                     
 	private float			m_CurrentRotation_X_Delta	= 1.0f;
 	private float			m_CurrentRotation_Y_Delta	= 1.0f;
 
 	private float			m_CameraOffset				= 5.0f;
 	private float			m_CurrentCameraOffset		= 5.0f;
-	private	float			m_CameraFPS_Shift			= 0.0f;
 
 	private	Vector3			m_CurrentDirection			= Vector3.zero;
 	private	Vector3			m_Traslation				= Vector3.zero;
