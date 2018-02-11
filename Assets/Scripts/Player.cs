@@ -13,20 +13,21 @@ public class Player : Interactable {
 
 	
 	// NAVIGATION
-	[Serializable]
+//	[Serializable]
 	private struct Navigation
 	{
 		public	bool					HasPath;
-		public	AINode[]				Path;
+		public	IAINode[]				Path;
+		public	Vector3					PrevPosition;
 		public	int						NodeIdx;
+		public	float					NextNodeDistance;
 		public	Action					Action;
 		public	Interactable			Interactable;
 	}
 	[ SerializeField ]
 	private	Navigation			m_Movement					= default ( Navigation );
 	private	Vector3				m_MovementStartPosition		= Vector3.zero;
-	private	float				m_MovementInterpolant		= 0f;
-	private	AINode				m_CurrentNode				= null;
+	private	IAINode				m_CurrentNode				= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -47,7 +48,7 @@ public class Player : Interactable {
 		m_CurrentNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
 
 		float height = transform.position.y;
-		transform.position = new Vector3( m_CurrentNode.transform.position.x, height, m_CurrentNode.transform.position.z );
+		transform.position = new Vector3( m_CurrentNode.Position.x, height, m_CurrentNode.Position.z );
 	}
 
 
@@ -81,20 +82,12 @@ public class Player : Interactable {
 	// Move
 	public	void	Move( Interactable interactable, bool checkOverride = false )
 	{
-		// start node
-		AINode startNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
 
-		// final node
-		AINode finalNode = AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
-
-
-		if ( (interactable is IUsableObject ) == false && (finalNode == m_CurrentNode && checkOverride == false ) )
+		if ( m_Movement.HasPath == true && checkOverride == false )
 			return;
 
-		m_CurrentNode = finalNode;
-
 		// path finding
-		AINode[] path	= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, finalNode );
+		IAINode[] path	= AI.Pathfinding.AStarSearch.Instance.FindPath( transform.position, interactable.transform.position );
 
 		m_Movement = new Navigation();
 
@@ -121,9 +114,10 @@ public class Player : Interactable {
 		m_Movement.NodeIdx = 0;
 		m_Movement.Action = delegate { CheckForUsage( interactable ); };
 		m_Movement.Interactable = interactable;
+		m_Movement.NextNodeDistance = ( path[0].Position - transform.position ).sqrMagnitude;
+		m_Movement.PrevPosition = transform.position;
 
 		m_MovementStartPosition = transform.position;
-		m_MovementInterpolant = 0f;
 	}
 
 
@@ -147,33 +141,33 @@ public class Player : Interactable {
 		if ( m_Movement.HasPath == false )
 			return;
 
-		if ( m_MovementInterpolant < 1f )
-		{
-			m_MovementInterpolant += Time.deltaTime * m_Speed;
+		float traveledDistance = ( m_Movement.PrevPosition - transform.position ).sqrMagnitude;
 
-			Vector3 finalposition = m_Movement.Path[ m_Movement.NodeIdx ].transform.position;
-			Vector3 position = Vector3.Lerp( m_MovementStartPosition, finalposition, m_MovementInterpolant );
-			position.y = m_MovementStartPosition.y;
-			transform.position = position;
-		}
-		else // arrived at node
+		// CHECK
+		if ( traveledDistance >= m_Movement.NextNodeDistance )
 		{
 			m_Movement.Path[ m_Movement.NodeIdx ].OnNodeReached( this );
 			m_Movement.NodeIdx ++;
 
+
 			// Arrived
 			if ( m_Movement.NodeIdx == m_Movement.Path.Length || m_Movement.Path[ m_Movement.NodeIdx ] == null )
 			{
-				m_MovementInterpolant = 0f;
 				m_Movement.HasPath = false;
 				if ( m_Movement.Action != null )
 					m_Movement.Action();
 				return;
 			}
 			
+			m_Movement.NextNodeDistance = ( m_Movement.Path[ m_Movement.NodeIdx ].Position - transform.position ).sqrMagnitude;
 			m_MovementStartPosition = transform.position;
-			m_MovementInterpolant = 0f;
+			m_Movement.PrevPosition = transform.position;
 		}
+
+
+		// go to node
+		Vector3 targetDirection = ( m_Movement.Path[ m_Movement.NodeIdx ].Position - transform.position ).normalized;
+		transform.position += ( targetDirection * m_Speed ) * Time.deltaTime;
 	}
 
 }

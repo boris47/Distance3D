@@ -26,7 +26,7 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// AWAKE
-		void Awake ()
+		private	void	Awake ()
 		{
 			Instance = this;
 
@@ -36,7 +36,7 @@ namespace AI.Pathfinding
 			Debug.Log( "Nodes: " + Nodes.Length );
 
 			// neighbours setup
-			foreach ( AINode node in Nodes )
+			foreach ( IAINode node in Nodes )
 			{
 				UpdateNeighbours( node, false );
 			}
@@ -45,32 +45,62 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// UpdaeNeighbours
-		public	void	UpdateNeighbours( AINode node, bool isUpdate )
+		public	void	UpdateNeighbours( IAINode iNode, bool isUpdate )
 		{
+
+			if (  iNode is IAINodeLinker )
+				return;
+
+			// UPDATE PREVIOUS NEIGHBOURS
 			if ( isUpdate == true )
 			{
 				// update previous neighbours
-				foreach( IAINode neigh in ( node as IAINode ).Neighbours )
+				foreach( IAINode neigh in iNode.Neighbours )
 				{
-					UpdateNeighbours( neigh as AINode, false );
+					UpdateNeighbours( neigh, false );
 				}
 			}
 
-			// get current neighbours
-			AINode interactable = node as AINode;
-			( node as IAINode ).Neighbours = System.Array.FindAll
+			// Get neighbours by distance
+			IAINode[] neighbours = System.Array.FindAll
 			( 
 				Nodes, 
-				n => ( n.transform.position - interactable.transform.position ).sqrMagnitude <= scanRadius * scanRadius &&
-				n != (AINode)node
+				n => ( n.transform.position - iNode.Position ).sqrMagnitude <= scanRadius * scanRadius &&
+				(AINode)n != (AINode)iNode
 			);
 
+			// create temporary array of neighbours and copy neighbours found
+			bool hasLinker = iNode.Linker != null;
+			AINode[] nodeNeighbours = new AINode[ neighbours.Length + ( hasLinker ? 1 : 0 ) ];
+			System.Array.Copy( neighbours, nodeNeighbours, neighbours.Length );
+
+
+			// LINKER ASSIGNMENT
+			if ( hasLinker )
+			{
+				// add linker to this node
+				nodeNeighbours[ nodeNeighbours.Length - 1 ] = iNode.Linker as AINode;
+				
+				IAINode			ILinker		= iNode.Linker;
+
+				// resize Neighbours array
+				var tmpNeighbours = ILinker.Neighbours;
+				System.Array.Resize( ref tmpNeighbours, ( ILinker.Neighbours != null ) ? ILinker.Neighbours.Length + 1 : 1 );
+				// add this node to linker
+				tmpNeighbours[ tmpNeighbours.Length - 1 ] = iNode as AINode;
+				ILinker.Neighbours = tmpNeighbours;
+			}
+		
+			iNode.Neighbours = nodeNeighbours;
+			
+
+			// UPDATE CURRENT NEIGHBOURS
 			if ( isUpdate == true )
 			{
 				// update previous neighbours
-				foreach( IAINode neigh in ( node as IAINode ).Neighbours )
+				foreach( IAINode neigh in iNode.Neighbours )
 				{
-					UpdateNeighbours( neigh as AINode, false );
+					UpdateNeighbours( neigh, false );
 				}
 			}
 		}
@@ -78,14 +108,14 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// GetNearestNode
-		public	AINode	GetNearestNode( Vector3 position )
+		public	IAINode	GetNearestNode( Vector3 position )
 		{
 			float currentDistance = float.MaxValue;
-			AINode result = null;
+			IAINode result = null;
 
-			foreach ( AINode node in Nodes )
+			foreach ( IAINode node in Nodes )
 			{
-				float distance = ( node.transform.position - position ).sqrMagnitude;
+				float distance = ( node.Position - position ).sqrMagnitude;
 				if ( distance < currentDistance * currentDistance )
 				{
 					currentDistance = distance;
@@ -102,7 +132,7 @@ namespace AI.Pathfinding
 		{
 			foreach ( IAINode node in Nodes )
 			{
-				node.Cost	= float.MaxValue;
+				node.gCost	= float.MaxValue;
 				node.Parent = null;
 			}
 		}

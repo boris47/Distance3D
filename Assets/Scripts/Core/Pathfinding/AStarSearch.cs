@@ -9,8 +9,6 @@ namespace AI.Pathfinding
 	{
 		public	static	AStarSearch Instance = null;
 
-		
-
 		//////////////////////////////////////////////////////////////////////////
 		// AWAKE
 		private	void	Awake()
@@ -21,7 +19,7 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// GetBestNode
-		private	AINode	GetBestNode( IEnumerable set, bool useHeuristic )
+		private	IAINode	GetBestNode( IEnumerable set, bool useHeuristic )
 		{
 			IAINode bestNode = null;
 			float bestTotal = float.MaxValue;
@@ -31,27 +29,27 @@ namespace AI.Pathfinding
 				if ( n.IsWalkable == false )
 					continue;
 
-				float totalCost = useHeuristic ? n.Cost + n.Heuristic : n.Cost;
+				float totalCost = useHeuristic ? n.gCost + n.Heuristic : n.gCost;
 				if ( totalCost < bestTotal )
 				{
 					bestTotal = totalCost;
 					bestNode = n;
 				}
 			}
-			return bestNode as AINode;
+			return bestNode;
 		}
 
 
 		//////////////////////////////////////////////////////////////////////////
 		// FindPath
-		private	AINode[]	RetracePath( AINode startNode, AINode endNode )
+		private	IAINode[]	RetracePath( IAINode startNode, IAINode endNode )
 		{
-			List<AINode> path = new List<AINode>();
-			AINode currentNode = endNode;
+			List<IAINode> path = new List<IAINode>();
+			IAINode currentNode = endNode;
 			while ( currentNode != startNode )
 			{
 				path.Add( currentNode );
-				currentNode = ( currentNode as IAINode ).Parent;
+				currentNode = currentNode.Parent;
 			}
 
 			path.Reverse();
@@ -63,22 +61,25 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// FindPath
-		public AINode[]	FindPath( AINode startNode, AINode endNode )
+		public IAINode[]	FindPath( Vector3 startPosition, Vector3 endPosition )
 		{
-			HashSet<AINode> closedSet	= new HashSet<AINode>();
-			List<AINode>	openSet		= new List<AINode>();
+			IAINode startNode	= GraphMaker.Instance.GetNearestNode( startPosition );
+			IAINode endNode		= GraphMaker.Instance.GetNearestNode( endPosition );
+
+			HashSet<IAINode>	closedSet	= new HashSet<IAINode>();
+			List<IAINode>		openSet		= new List<IAINode>();
 
 			if ( startNode.IsWalkable == false )
 				return null;
 
-			( startNode as IAINode ).Cost = 0;
-			( startNode as IAINode ).Heuristic = ( startNode.transform.position - endNode.transform.position ).sqrMagnitude;
+			startNode.gCost = 0;
+			startNode.Heuristic = ( startNode.Position - endNode.Position ).sqrMagnitude;
 			openSet.Add( startNode );
 
 			// Start scan
 			while ( openSet.Count > 0 )
 			{
-				AINode currentNode = GetBestNode( openSet, true );
+				IAINode currentNode = GetBestNode( openSet, true );
 
 				if ( currentNode == endNode )
 				{
@@ -95,23 +96,22 @@ namespace AI.Pathfinding
 				openSet.Remove( currentNode );
 
 				// Setup its neighbours
-				foreach( AINode neighbour in currentNode.Neighbours )
+				foreach( IAINode iNeighbour in currentNode.Neighbours )
 				{
 					// Ignore the neighbor which is already evaluated.
-					if ( neighbour.IsWalkable == false || closedSet.Contains( neighbour ) )
+					if ( iNeighbour.IsWalkable == false || closedSet.Contains( iNeighbour ) )
 						continue;
 
-					IAINode INeigh = ( neighbour as IAINode );
 
-					float gCost = ( currentNode as IAINode ).Cost + ( currentNode.transform.position - neighbour.transform.position ).sqrMagnitude;
-					if ( gCost < INeigh.Cost || openSet.Contains(neighbour) == false )
+					float gCost = currentNode.gCost + ( currentNode.Position - iNeighbour.Position ).sqrMagnitude;
+					if ( gCost < iNeighbour.gCost || openSet.Contains(iNeighbour) == false )
 					{
-						INeigh.Cost		= gCost;
-						INeigh.Heuristic	= ( neighbour.transform.position - endNode.transform.position ).sqrMagnitude;
-						INeigh.Parent		= currentNode;
+						iNeighbour.gCost		= gCost;
+						iNeighbour.Heuristic	= ( iNeighbour.Position - endNode.Position ).sqrMagnitude;
+						iNeighbour.Parent		= currentNode;
 
-						if ( openSet.Contains( neighbour ) == false )
-							openSet.Add( neighbour );
+						if ( openSet.Contains( iNeighbour ) == false )
+							openSet.Add( iNeighbour );
 					}
 
 				}

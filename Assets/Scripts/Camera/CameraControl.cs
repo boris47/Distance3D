@@ -31,9 +31,9 @@ public partial class CameraControl : MonoBehaviour, ICameraControl {
 	private	float			m_MaxOffset					= 20f;
 	[SerializeField][Range( 3f, 1000f )]
 	private	float			m_MaxTraslation				= 10f;
-	[SerializeField][Range( 0.1f, 10f )]
+	[SerializeField][Range( 0.1f, 50f )]
 	private	float			m_TraslationSensitivity		= 5f;
-	[SerializeField][Range( 0.1f, 20f )]
+	[SerializeField][Range( 0.1f, 50f )]
 	private	float			m_RotationSensitivity		= 5f;
 
 	[SerializeField][Range( 0.2f, 20.0f )]
@@ -78,6 +78,7 @@ public partial class CameraControl : MonoBehaviour, ICameraControl {
 
 	private	Vector3			m_CurrentDirection			= Vector3.zero;
 	private	Vector3			m_Traslation				= Vector3.zero;
+	private	Vector3			m_DesiredPosition			= Vector3.zero;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -234,9 +235,19 @@ public partial class CameraControl : MonoBehaviour, ICameraControl {
 				float magnitude = newPosition.sqrMagnitude;
 				if ( magnitude < m_MaxTraslation * m_MaxTraslation )
 				{
-					transform.position = newPosition;
+
+					if ( m_SmoothedPosition )
+					{
+						transform.position = Vector3.Lerp( transform.position, newPosition, Time.deltaTime * 5f );
+					}
+					else
+					{
+						transform.position = newPosition;
+					}
 				}
 			}
+
+			
 		}
 		
 

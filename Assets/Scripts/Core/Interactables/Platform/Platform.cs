@@ -48,21 +48,19 @@ public class Platform : AINode {
 
 		if ( waypointsContainer.childCount < 1 && m_InterpolationType == MotionType.LERPED )
 		{
-			print( "Platform " + name + " cannot have lerped motion because non enough waypoints, minimal is 4 waypoints... \n setting to linear" );
+			print( "Platform " + name + " cannot have lerped motion because non enough waypoints, minimal is 1 waypoint... \n setting to linear" );
 			m_InterpolationType	 = MotionType.LINEAR;
 		}
 
 		m_WaypointsPositions.Add( m_Dock1.transform.position );
 		m_WaypointsPositions.Add( m_Dock1.transform.position );
-//		print( "added " + m_Dock1.name );
+
 		foreach ( Transform t in waypointsContainer )
 		{
 			m_WaypointsPositions.Add( t.position );
-//			print( "added " + t.name );
 		}
 		m_WaypointsPositions.Add( m_Dock2.transform.position );
 		m_WaypointsPositions.Add( m_Dock2.transform.position );
-//		print( "added " + m_Dock2.name );
 
 		// set platform porition on Dock 1
 		transform.position = new Vector3( m_Dock1.transform.position.x, transform.position.y, m_Dock1.transform.position.z );

@@ -8,7 +8,7 @@ public class Openable : UsableObject, IUsableObject {
 
 	private	Animator	m_Animator				= null;
 
-	private	AINode		m_AINode				= null;
+	private	IAINode		m_AINode				= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -18,7 +18,7 @@ public class Openable : UsableObject, IUsableObject {
 		base.Start();
 
 		m_Animator	= GetComponent<Animator>();
-		m_AINode	= GetComponentInChildren<AINode>();
+		m_AINode	= GetComponentInChildren<IAINode>();
 
 		if ( m_IsActivated	== false )
 			m_AINode.IsWalkable = false;
