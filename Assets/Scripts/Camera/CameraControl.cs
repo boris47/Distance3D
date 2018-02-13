@@ -216,6 +216,8 @@ public partial class CameraControl : MonoBehaviour, ICameraControl {
 					destTraslation += (  sensitivity/traslationSensitivity * transform.right );
 					Target = null;
 				}
+				if ( Input.GetKey( KeyCode.LeftShift ) )
+					destTraslation *= m_CameraOffset * 0.25f;
 
 			}
 

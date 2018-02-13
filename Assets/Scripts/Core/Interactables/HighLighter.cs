@@ -4,6 +4,7 @@ using UnityEngine;
 public class HighLighter : MonoBehaviour {
 	
 
+
 	public	void	Highlight()
 	{
 		foreach( Renderer r in GetComponentsInChildren<Renderer>() )

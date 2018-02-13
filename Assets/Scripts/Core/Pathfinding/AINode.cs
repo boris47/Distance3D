@@ -58,7 +58,7 @@ public abstract class AINode : Interactable, IAINode {
 		set { m_IsWalkable = value; IsInteractable = value; }
 	}
 
-//	[SerializeField]
+	[SerializeField]
 	private		AINode[]					m_Neighbours		= null;
 				AINode[]					IAINode.Neighbours
 	{

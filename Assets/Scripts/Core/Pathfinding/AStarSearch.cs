@@ -58,14 +58,20 @@ namespace AI.Pathfinding
 		}
 
 
-
 		//////////////////////////////////////////////////////////////////////////
 		// FindPath
 		public IAINode[]	FindPath( Vector3 startPosition, Vector3 endPosition )
 		{
 			IAINode startNode	= GraphMaker.Instance.GetNearestNode( startPosition );
 			IAINode endNode		= GraphMaker.Instance.GetNearestNode( endPosition );
+			return FindPath( startNode, endNode );
+		}
 
+
+		//////////////////////////////////////////////////////////////////////////
+		// FindPath
+		public IAINode[]	FindPath( IAINode startNode, IAINode endNode )
+		{
 			HashSet<IAINode>	closedSet	= new HashSet<IAINode>();
 			List<IAINode>		openSet		= new List<IAINode>();
 

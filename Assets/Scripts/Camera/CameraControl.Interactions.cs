@@ -26,7 +26,11 @@ public partial class CameraControl : ICameraControl {
 
 			if ( CurrentInteractable == null )
 			{
-				Player.CurrentPlayer = null;
+				if ( Player.CurrentPlayer != null )
+				{
+					Player.CurrentPlayer.SetSelected( false );
+					Player.CurrentPlayer = null;
+				}
 				return;
 			}
 			

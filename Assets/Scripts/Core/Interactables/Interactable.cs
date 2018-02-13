@@ -22,6 +22,8 @@ public abstract class Interactable : MonoBehaviour {
 	protected virtual void Start()
 	{
 		m_HighLighter = GetComponent<HighLighter>();
+		if ( m_HighLighter == null )
+			m_HighLighter = gameObject.AddComponent<HighLighter>();
 	}
 
 	

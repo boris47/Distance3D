@@ -132,8 +132,9 @@ namespace AI.Pathfinding
 		{
 			foreach ( IAINode node in Nodes )
 			{
-				node.gCost	= float.MaxValue;
-				node.Parent = null;
+				node.Heuristic	= 0f;
+				node.gCost		= float.MaxValue;
+				node.Parent		= null;
 			}
 		}
 

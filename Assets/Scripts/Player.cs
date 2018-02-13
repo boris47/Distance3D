@@ -13,7 +13,7 @@ public class Player : Interactable {
 
 	
 	// NAVIGATION
-//	[Serializable]
+	[Serializable]
 	private struct Navigation
 	{
 		public	bool					HasPath;
@@ -23,11 +23,23 @@ public class Player : Interactable {
 		public	float					NextNodeDistance;
 		public	Action					Action;
 		public	Interactable			Interactable;
+
+		public	void	Reset()
+		{
+			HasPath				= false;
+			Path				= null;
+			PrevPosition		= Vector3.zero;
+			NodeIdx				= -1;
+			NextNodeDistance	= -1f;
+			Action				= null;
+			Interactable		= null;
+		}
 	}
 	[ SerializeField ]
 	private	Navigation			m_Movement					= default ( Navigation );
 	private	Vector3				m_MovementStartPosition		= Vector3.zero;
 	private	IAINode				m_CurrentNode				= null;
+	private	IEnumerator			m_InputWaitCO				= null;
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -49,6 +61,43 @@ public class Player : Interactable {
 
 		float height = transform.position.y;
 		transform.position = new Vector3( m_CurrentNode.Position.x, height, m_CurrentNode.Position.z );
+
+		m_Movement = new Navigation();
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// OnMouseEnter ( Override )
+	protected override void OnMouseEnter()
+	{
+		if ( CurrentPlayer == this )
+			return;
+
+		// highlight object
+		base.OnMouseEnter();
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// SetSelected ( Override )
+	protected override void OnMouseExit()
+	{
+		if ( CurrentPlayer == this )
+			return;
+
+		// unhighlight object
+		base.OnMouseExit();
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// SetSelected
+	public	void	SetSelected( bool state )
+	{
+		foreach( var a in transform.GetComponentsInChildren<Renderer>() )
+		{
+			a.material.color = state == false ? Color.white : Color.green;
+		}
 	}
 
 
@@ -59,8 +108,11 @@ public class Player : Interactable {
 		if ( CameraControl.Instance.Target != null && CameraControl.Instance.Target != transform )
 			CameraControl.Instance.Target = transform;
 		// player selection
-		CurrentPlayer = this;
+		if ( CurrentPlayer != null && CurrentPlayer != this )
+			CurrentPlayer.SetSelected( false );
 
+		CurrentPlayer = this;
+		SetSelected( true );
 	}
 
 
@@ -79,43 +131,53 @@ public class Player : Interactable {
 
 
 	//////////////////////////////////////////////////////////////////////////
+	// WaitForNextInput ( Coroutine )
+	private	IEnumerator	WaitForNextInput()
+	{
+		yield return new WaitForSecondsRealtime( 2f );
+		m_InputWaitCO = null;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
 	// Move
 	public	void	Move( Interactable interactable, bool checkOverride = false )
 	{
-
-		if ( m_Movement.HasPath == true && checkOverride == false )
+		if ( m_InputWaitCO != null && checkOverride == false )
 			return;
 
-		// path finding
-		IAINode[] path	= AI.Pathfinding.AStarSearch.Instance.FindPath( transform.position, interactable.transform.position );
+		if ( m_InputWaitCO != null )
+			StopCoroutine( m_InputWaitCO );
 
+		StartCoroutine( m_InputWaitCO = WaitForNextInput() );
+
+		IAINode startNode	= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
+		IAINode endNode		= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
+		IAINode[] path		= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, endNode );
 		m_Movement = new Navigation();
 
 		if ( path == null || path.Length < 1 )
 		{
-			m_Movement.HasPath = false;
 			return;
 
 		}
 		if ( interactable is Lever || interactable is Openable )
 		{
 			path[ path.Length - 1 ] = null;
-
 			if ( path.Length == 1 && path[ path.Length - 1 ] == null )
 			{
 				CheckForUsage( interactable );
 				return;
 			}
-
 		}
 
-		m_Movement.HasPath = true;
-		m_Movement.Path = path;
-		m_Movement.NodeIdx = 0;
-		m_Movement.Action = delegate { CheckForUsage( interactable ); };
-		m_Movement.Interactable = interactable;
-		m_Movement.NextNodeDistance = ( path[0].Position - transform.position ).sqrMagnitude;
-		m_Movement.PrevPosition = transform.position;
+		m_Movement.HasPath			= true;
+		m_Movement.Path				= path;
+		m_Movement.PrevPosition		= transform.position;
+		m_Movement.NodeIdx			= 0;
+		m_Movement.NextNodeDistance	= ( path[0].Position - transform.position ).sqrMagnitude;
+		m_Movement.Action			= delegate { CheckForUsage( interactable ); };
+		m_Movement.Interactable		= interactable;
 
 		m_MovementStartPosition = transform.position;
 	}
@@ -149,21 +211,18 @@ public class Player : Interactable {
 			m_Movement.Path[ m_Movement.NodeIdx ].OnNodeReached( this );
 			m_Movement.NodeIdx ++;
 
-
 			// Arrived
 			if ( m_Movement.NodeIdx == m_Movement.Path.Length || m_Movement.Path[ m_Movement.NodeIdx ] == null )
 			{
-				m_Movement.HasPath = false;
 				if ( m_Movement.Action != null )
 					m_Movement.Action();
+				m_Movement.Reset();
 				return;
 			}
 			
 			m_Movement.NextNodeDistance = ( m_Movement.Path[ m_Movement.NodeIdx ].Position - transform.position ).sqrMagnitude;
-			m_MovementStartPosition = transform.position;
-			m_Movement.PrevPosition = transform.position;
+			m_MovementStartPosition = m_Movement.PrevPosition = transform.position;
 		}
-
 
 		// go to node
 		Vector3 targetDirection = ( m_Movement.Path[ m_Movement.NodeIdx ].Position - transform.position ).normalized;
