@@ -9,18 +9,35 @@ namespace AI.Pathfinding
 
 		public	static	GraphMaker		Instance			= null;
 
-		private	AINode[]				Nodes				= null;
+		// DEBUG
+		[SerializeField][Header("Debug Only")]
+		private bool					m_OnlyNodesCount	= false;
+
+		[SerializeField]
+		private	bool					m_ProcedurallyGen	= false;
+
+		[ SerializeField ][Range(1, 20)]
+		private	int						m_UpdateCount		= 1;
+
+		[ SerializeField ][Range( 0.1f, 10f )]
+		private	float					m_ScanRadius		= 1.1f;
+
+		private	AINode[]				m_Nodes				= null;
 		public	int						NodeCount
 		{
 			get
 			{
-				if ( Nodes != null )
-					return Nodes.Length;
+				if ( m_Nodes != null )
+					return m_Nodes.Length;
 				return 0;
 			}
 		}
 
-		private	float					scanRadius			= 1.1f;
+		private	bool					m_IsGraphReady		= false;
+		public	bool					IsGraphReady
+		{
+			get { return m_IsGraphReady; }
+		}
 
 
 
@@ -31,17 +48,63 @@ namespace AI.Pathfinding
 			Instance = this;
 
 			// Find all nodes
-			Nodes = FindObjectsOfType<AINode>();
+			m_Nodes = FindObjectsOfType<AINode>();
 
-			Debug.Log( "Nodes: " + Nodes.Length );
+			Debug.Log( "GraphMaker::Info:Nodes: " + m_Nodes.Length );
 
-			// neighbours setup
-			foreach ( IAINode node in Nodes )
+			if ( m_OnlyNodesCount )
+				return;
+
+			if ( m_ProcedurallyGen )
+				print( "GraphMaker::Awake: Generating Node Graph" );
+
+			foreach ( IAINode node in m_Nodes )
 			{
-				UpdateNeighbours( node, false );
+				node.Neighbours = null;
+
+				if ( m_ProcedurallyGen == false )
+					UpdateNeighbours( node, false );
+			}
+
+			if ( m_ProcedurallyGen == false )
+				m_IsGraphReady = true;
+		}
+		
+
+		//////////////////////////////////////////////////////////////////////////
+		// START ( Coroutine )
+		private System.Collections.IEnumerator Start()
+		{
+			if ( m_OnlyNodesCount )
+				yield break;
+
+			if ( m_ProcedurallyGen == false )
+			{
+				print( "GraphMaker::Start: Node Graph ready" );
+				yield break;
+			}
+
+			int internalCounter = 0;
+			for ( int i = 0; i-m_UpdateCount < m_Nodes.Length; i+= m_UpdateCount )
+			{	
+				while( internalCounter < m_UpdateCount )
+				{
+					if ( i + internalCounter >= m_Nodes.Length )
+					{
+						print( "GraphMaker::Start: Node Graph ready" );
+						m_IsGraphReady = true;
+						yield break;
+					}
+
+					IAINode node1 = m_Nodes[ i + internalCounter ];
+					UpdateNeighbours( node1, false );
+					internalCounter ++;
+				}
+				internalCounter = 0;
+				yield return null;
 			}
 		}
-
+		
 
 		//////////////////////////////////////////////////////////////////////////
 		// UpdaeNeighbours
@@ -64,8 +127,8 @@ namespace AI.Pathfinding
 			// Get neighbours by distance
 			IAINode[] neighbours = System.Array.FindAll
 			( 
-				Nodes, 
-				n => ( n.transform.position - iNode.Position ).sqrMagnitude <= scanRadius * scanRadius &&
+				m_Nodes, 
+				n => ( n.transform.position - iNode.Position ).sqrMagnitude <= m_ScanRadius * m_ScanRadius &&
 				(AINode)n != (AINode)iNode
 			);
 
@@ -113,7 +176,7 @@ namespace AI.Pathfinding
 			float currentDistance = float.MaxValue;
 			IAINode result = null;
 
-			foreach ( IAINode node in Nodes )
+			foreach ( IAINode node in m_Nodes )
 			{
 				float distance = ( node.Position - position ).sqrMagnitude;
 				if ( distance < currentDistance * currentDistance )
@@ -130,7 +193,7 @@ namespace AI.Pathfinding
 		// ResetCosts
 		internal	void	ResetNodes()
 		{
-			foreach ( IAINode node in Nodes )
+			foreach ( IAINode node in m_Nodes )
 			{
 				node.Heuristic	= 0f;
 				node.gCost		= float.MaxValue;

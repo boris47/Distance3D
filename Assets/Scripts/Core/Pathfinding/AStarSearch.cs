@@ -72,6 +72,12 @@ namespace AI.Pathfinding
 		// FindPath
 		public IAINode[]	FindPath( IAINode startNode, IAINode endNode )
 		{
+			if ( GraphMaker.Instance.IsGraphReady == false )
+			{
+				print( "AStarSearch::FindPath:Node graph is building!!" );
+				return null;
+			}
+
 			HashSet<IAINode>	closedSet	= new HashSet<IAINode>();
 			List<IAINode>		openSet		= new List<IAINode>();
 
@@ -104,6 +110,12 @@ namespace AI.Pathfinding
 				// Setup its neighbours
 				foreach( IAINode iNeighbour in currentNode.Neighbours )
 				{
+					if ( iNeighbour == null )
+					{
+						print( "node " + ( currentNode as AINode ).name + " has neighbour as null " );
+						return null;
+					}
+
 					// Ignore the neighbor which is already evaluated.
 					if ( iNeighbour.IsWalkable == false || closedSet.Contains( iNeighbour ) )
 						continue;

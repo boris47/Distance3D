@@ -21,8 +21,6 @@ GameObject:
   - component: {fileID: 4207646355335006}
   - component: {fileID: 33710036551845388}
   - component: {fileID: 23410502853134438}
-  - component: {fileID: 114707459797238764}
-  - component: {fileID: 114366894726274724}
   m_Layer: 0
   m_Name: Plate
   m_TagString: Untagged
@@ -59,6 +57,8 @@ GameObject:
   - component: {fileID: 4582560401305488}
   - component: {fileID: 33844442491558228}
   - component: {fileID: 23930732388886232}
+  - component: {fileID: 114171687540991188}
+  - component: {fileID: 114218795373593030}
   m_Layer: 0
   m_Name: Tile
   m_TagString: Untagged
@@ -247,29 +247,32 @@ MonoBehaviour:
   m_IsActive: 1
   m_IsActivated: 0
   m_TriggerOnce: 1
---- !u!114 &114366894726274724
+--- !u!114 &114171687540991188
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1129944876478642}
+  m_GameObject: {fileID: 1574373881506562}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3cb6b243d4485a54c92ed931b3b3e62d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &114707459797238764
+--- !u!114 &114218795373593030
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 1129944876478642}
+  m_GameObject: {fileID: 1574373881506562}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5ec5a9febee7044fbea6a5ffceac772, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_IsInteractable: 1
+  m_Linker: {fileID: 0}
+  m_IsWalkable: 1
+  m_Neighbours: []
 --- !u!114 &114822684480372728
 MonoBehaviour:
   m_ObjectHideFlags: 1

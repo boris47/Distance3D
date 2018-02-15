@@ -154,13 +154,11 @@ public class Player : Interactable {
 		IAINode startNode	= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
 		IAINode endNode		= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
 		IAINode[] path		= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, endNode );
-		m_Movement = new Navigation();
-
 		if ( path == null || path.Length < 1 )
 		{
 			return;
-
 		}
+
 		if ( interactable is Lever || interactable is Openable )
 		{
 			path[ path.Length - 1 ] = null;
@@ -171,6 +169,7 @@ public class Player : Interactable {
 			}
 		}
 
+		m_Movement.Reset();
 		m_Movement.HasPath			= true;
 		m_Movement.Path				= path;
 		m_Movement.PrevPosition		= transform.position;
