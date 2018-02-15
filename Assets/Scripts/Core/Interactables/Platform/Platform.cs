@@ -7,6 +7,7 @@ public class Platform : AINode {
 
 	public	float			m_Speed					= 0f;
 
+	public	const float		LERPED_DIST_MULTI		= 0.4f;
 
 	private	PlatformDock	m_Dock1					= null;
 	private	PlatformDock	m_Dock2					= null;
@@ -160,7 +161,7 @@ public class Platform : AINode {
 		// LERPED
 		if ( m_InterpolationType == MotionType.LERPED )
 		{
-			m_InterpolantGlobal += Time.deltaTime * m_Speed * 0.1f;
+			m_InterpolantGlobal += Time.deltaTime * m_Speed * ( LERPED_DIST_MULTI / m_WaypointsPositions.Count );
 			Vector3 position = Interp( m_WaypointsPositions, m_InterpolantGlobal );
 			transform.position = position;
 
@@ -185,22 +186,6 @@ public class Platform : AINode {
 	}
 
 
-
-	//////////////////////////////////////////////////////////////////////////
-	// UNITY
-	//////////////////////////////////////////////////////////////////////////
-
-	//////////////////////////////////////////////////////////////////////////
-	// Update
-	private void Update()
-	{
-		if ( IsMoving == true )
-		{
-			Move();
-		}
-	}
-	
-
 	private Vector3 Interp( List<Vector3> wayPoints, float t )
 	{
 		int numSections = wayPoints.Count - 3;
@@ -220,4 +205,36 @@ public class Platform : AINode {
 			2f * b
 		);
 	}
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// UNITY
+	//////////////////////////////////////////////////////////////////////////
+
+	//////////////////////////////////////////////////////////////////////////
+	// Update
+	private void Update()
+	{
+		if ( IsMoving == true )
+		{
+			Move();
+		}
+	}
+
+	/*
+	private void OnDrawGizmos()
+	{
+		Transform waypointsContainer = transform.parent.Find( "WayPoints" );
+		List<Vector3> waypointsPositions = new List<Vector3>();
+
+		foreach( Transform t in waypointsContainer )
+			waypointsPositions.Add( t.position );
+
+		for ( int i = 0; i < m_WaypointsPositions.Count - 1; i++ )
+		{
+			Gizmos.DrawLine( m_WaypointsPositions[i], m_WaypointsPositions[i+1] );
+
+		}
+	}
+	*/
 }
