@@ -63,6 +63,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9d2bdd1dc10b7245b58696204338ef3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_OnlyNodesCount: 0
   m_ProcedurallyGen: 1
   m_UpdateCount: 7
   m_ScanRadius: 1.1
