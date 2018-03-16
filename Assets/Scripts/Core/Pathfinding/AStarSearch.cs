@@ -72,9 +72,9 @@ namespace AI.Pathfinding
 		// FindPath
 		public IAINode[]	FindPath( IAINode startNode, IAINode endNode )
 		{
-			if ( GraphMaker.Instance.IsGraphReady == false )
+			if ( GraphMaker.Instance.NodeCount == 0 )
 			{
-				print( "AStarSearch::FindPath:Node graph is building!!" );
+				print( "AStarSearch::FindPath:Node graph has to be build !!" );
 				return null;
 			}
 

@@ -4,25 +4,34 @@ using UnityEngine;
 namespace AI.Pathfinding
 {
 
-	public class GraphMaker : MonoBehaviour
+	interface IGrapMakerEditor {
+
+		float			ScanRadius	{ get; }
+		AINode[]		Nodes		{ get; set; }
+
+	}
+
+	public class GraphMaker : MonoBehaviour, IGrapMakerEditor
 	{
 
 		public	static	GraphMaker		Instance			= null;
 
-		// DEBUG
-		[SerializeField][Header("Debug Only")]
-		private bool					m_OnlyNodesCount	= false;
-
-		[SerializeField]
-		private	bool					m_ProcedurallyGen	= false;
-
-		[ SerializeField ][Range(1, 20)]
-		private	int						m_UpdateCount		= 1;
-
 		[ SerializeField ][Range( 0.1f, 10f )]
 		private	float					m_ScanRadius		= 1.1f;
+		float							IGrapMakerEditor.ScanRadius
+		{
+			get { return m_ScanRadius; }
+		}
 
-		private	AINode[]				m_Nodes				= null;
+
+		private static	AINode[]		m_Nodes				= null;
+		AINode[]						IGrapMakerEditor.Nodes
+		{
+			get { return m_Nodes; }
+			set { m_Nodes = value; }
+		}
+
+
 		public	int						NodeCount
 		{
 			get
@@ -49,60 +58,6 @@ namespace AI.Pathfinding
 
 			// Find all nodes
 			m_Nodes = FindObjectsOfType<AINode>();
-
-			Debug.Log( "GraphMaker::Info:Nodes: " + m_Nodes.Length );
-
-			if ( m_OnlyNodesCount )
-				return;
-
-			if ( m_ProcedurallyGen )
-				print( "GraphMaker::Awake: Generating Node Graph" );
-
-			foreach ( IAINode node in m_Nodes )
-			{
-				node.Neighbours = null;
-
-				if ( m_ProcedurallyGen == false )
-					UpdateNeighbours( node, false );
-			}
-
-			if ( m_ProcedurallyGen == false )
-				m_IsGraphReady = true;
-		}
-		
-
-		//////////////////////////////////////////////////////////////////////////
-		// START ( Coroutine )
-		private System.Collections.IEnumerator Start()
-		{
-			if ( m_OnlyNodesCount )
-				yield break;
-
-			if ( m_ProcedurallyGen == false )
-			{
-				print( "GraphMaker::Start: Node Graph ready" );
-				yield break;
-			}
-
-			int internalCounter = 0;
-			for ( int i = 0; i-m_UpdateCount < m_Nodes.Length; i+= m_UpdateCount )
-			{	
-				while( internalCounter < m_UpdateCount )
-				{
-					if ( i + internalCounter >= m_Nodes.Length )
-					{
-						print( "GraphMaker::Start: Node Graph ready" );
-						m_IsGraphReady = true;
-						yield break;
-					}
-
-					IAINode node1 = m_Nodes[ i + internalCounter ];
-					UpdateNeighbours( node1, false );
-					internalCounter ++;
-				}
-				internalCounter = 0;
-				yield return null;
-			}
 		}
 		
 
@@ -110,9 +65,11 @@ namespace AI.Pathfinding
 		// UpdaeNeighbours
 		public	void	UpdateNeighbours( IAINode iNode, bool isUpdate )
 		{
-
 			if (  iNode is IAINodeLinker )
 				return;
+
+			if ( m_Nodes == null )
+				m_Nodes = FindObjectsOfType<AINode>();
 
 			// UPDATE PREVIOUS NEIGHBOURS
 			if ( isUpdate == true )

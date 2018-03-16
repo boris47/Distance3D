@@ -19,7 +19,7 @@ public interface IAINodeLinker {
 }
 
 
-[RequireComponent( typeof ( HighLighter ) )]
+[RequireComponent( typeof ( HighLighter ) ), System.Serializable]
 public abstract class AINode : Interactable, IAINode {
 	///
 	/// PATHFINDING		START
