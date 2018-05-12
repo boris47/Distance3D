@@ -18,6 +18,7 @@ public class Player : Interactable {
 	{
 		public	bool					HasPath;
 		public	IAINode[]				Path;
+		public	int						PathLength;
 		public	Vector3					PrevPosition;
 		public	int						NodeIdx;
 		public	float					NextNodeDistance;
@@ -27,7 +28,7 @@ public class Player : Interactable {
 		public	void	Reset()
 		{
 			HasPath				= false;
-			Path				= null;
+//			Path				= null;
 			PrevPosition		= Vector3.zero;
 			NodeIdx				= -1;
 			NextNodeDistance	= -1f;
@@ -63,6 +64,7 @@ public class Player : Interactable {
 		transform.position = new Vector3( m_CurrentNode.Position.x, height, m_CurrentNode.Position.z );
 
 		m_Movement = new Navigation();
+		m_Movement.Path = new IAINode[ AI.Pathfinding.GraphMaker.Instance.NodeCount ];
 	}
 
 
@@ -151,18 +153,18 @@ public class Player : Interactable {
 
 		StartCoroutine( m_InputWaitCO = WaitForNextInput() );
 
-		IAINode startNode	= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
-		IAINode endNode		= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
-		IAINode[] path		= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, endNode );
-		if ( path == null || path.Length < 1 )
+		IAINode startNode		= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( transform.position );
+		IAINode endNode			= AI.Pathfinding.GraphMaker.Instance.GetNearestNode( interactable.transform.position );
+		m_Movement.PathLength	= AI.Pathfinding.AStarSearch.Instance.FindPath( startNode, endNode, ref m_Movement.Path );
+		if ( m_Movement.PathLength == 0 )
 		{
 			return;
 		}
 
 		if ( interactable is Lever || interactable is Openable )
 		{
-			path[ path.Length - 1 ] = null;
-			if ( path.Length == 1 && path[ path.Length - 1 ] == null )
+			m_Movement.PathLength --;
+			if ( m_Movement.PathLength == 1 && m_Movement.Path[ m_Movement.PathLength - 1 ] == null )
 			{
 				CheckForUsage( interactable );
 				return;
@@ -170,11 +172,11 @@ public class Player : Interactable {
 		}
 
 		m_Movement.Reset();
+
 		m_Movement.HasPath			= true;
-		m_Movement.Path				= path;
 		m_Movement.PrevPosition		= transform.position;
 		m_Movement.NodeIdx			= 0;
-		m_Movement.NextNodeDistance	= ( path[0].Position - transform.position ).sqrMagnitude;
+		m_Movement.NextNodeDistance	= ( m_Movement.Path[0].Position - transform.position ).sqrMagnitude;
 		m_Movement.Action			= delegate { CheckForUsage( interactable ); };
 		m_Movement.Interactable		= interactable;
 
@@ -211,7 +213,7 @@ public class Player : Interactable {
 			m_Movement.NodeIdx ++;
 
 			// Arrived
-			if ( m_Movement.NodeIdx == m_Movement.Path.Length || m_Movement.Path[ m_Movement.NodeIdx ] == null )
+			if ( m_Movement.NodeIdx == m_Movement.PathLength || m_Movement.Path[ m_Movement.NodeIdx ] == null )
 			{
 				if ( m_Movement.Action != null )
 					m_Movement.Action();

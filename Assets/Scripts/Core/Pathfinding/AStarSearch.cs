@@ -2,18 +2,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using System.Diagnostics;
+
 namespace AI.Pathfinding
 {
 
 	public class AStarSearch : MonoBehaviour
 	{
-		public	static	AStarSearch Instance = null;
+//		Stopwatch sw = new Stopwatch();
+
+		public	static	AStarSearch Instance			= null;
+
+		Heap<IAINode>				m_OpenSet			= null;
+
+		private	int					m_PathNodeCount		= 0;
 
 		//////////////////////////////////////////////////////////////////////////
 		// AWAKE
 		private	void	Awake()
 		{
 			Instance = this;
+			m_OpenSet = new Heap<IAINode>( GraphMaker.Instance.NodeCount );
 		}
 
 
@@ -42,101 +51,109 @@ namespace AI.Pathfinding
 
 		//////////////////////////////////////////////////////////////////////////
 		// FindPath
-		private	IAINode[]	RetracePath( IAINode startNode, IAINode endNode )
+		private	int	RetracePath( IAINode startNode, IAINode endNode, ref IAINode[] path )
 		{
-			List<IAINode> path = new List<IAINode>();
+			int currentNodeCount = 0;
 			IAINode currentNode = endNode;
-			while ( currentNode != startNode )
-			{
-				path.Add( currentNode );
-				currentNode = currentNode.Parent;
-			}
 
-			path.Reverse();
+			while ( currentNode.Equals( startNode ) == false )
+			{
+				path[ currentNodeCount ] = currentNode;
+				currentNode = currentNode.Parent;
+				currentNodeCount ++;
+			}
+			path[ currentNodeCount ] = currentNode;
+			currentNodeCount ++;
+//			sw.Stop();
+//			print( "Node count: " + currentNodeCount + ", path found in " + sw.ElapsedMilliseconds + "ms" );
+
 			GraphMaker.Instance.ResetNodes();
-			return path.ToArray();
+			m_OpenSet.Reset();
+			return currentNodeCount;
 		}
 
 
 		//////////////////////////////////////////////////////////////////////////
 		// FindPath
-		public IAINode[]	FindPath( Vector3 startPosition, Vector3 endPosition )
+		public int	FindPath( Vector3 startPosition, Vector3 endPosition, ref IAINode[] path )
 		{
 			IAINode startNode	= GraphMaker.Instance.GetNearestNode( startPosition );
 			IAINode endNode		= GraphMaker.Instance.GetNearestNode( endPosition );
-			return FindPath( startNode, endNode );
+			return FindPath( startNode, endNode, ref path );
 		}
 
 
 		//////////////////////////////////////////////////////////////////////////
 		// FindPath
-		public IAINode[]	FindPath( IAINode startNode, IAINode endNode )
+		public int	FindPath( IAINode startNode, IAINode endNode, ref IAINode[] path )
 		{
 			if ( GraphMaker.Instance.NodeCount == 0 )
 			{
 				print( "AStarSearch::FindPath:Node graph has to be build !!" );
-				return null;
+				return 0;
 			}
 
-			HashSet<IAINode>	closedSet	= new HashSet<IAINode>();
-			List<IAINode>		openSet		= new List<IAINode>();
+			if ( endNode.IsWalkable == false )
+				return 0;
 
-			if ( startNode.IsWalkable == false )
-				return null;
+			endNode.gCost = 0;
+			endNode.Heuristic = ( endNode.Position - startNode.Position ).sqrMagnitude;
 
-			startNode.gCost = 0;
-			startNode.Heuristic = ( startNode.Position - endNode.Position ).sqrMagnitude;
-			openSet.Add( startNode );
+			// First node is always discovered
+			m_OpenSet.Add( endNode );
+
+//			sw.Reset();
+//			sw.Start();
 
 			// Start scan
-			while ( openSet.Count > 0 )
+			while ( m_OpenSet.Count > 0 )
 			{
-				IAINode currentNode = GetBestNode( openSet, true );
-
-				if ( currentNode == endNode )
+				IAINode currentNode = m_OpenSet.RemoveFirst();
+				if ( currentNode.ID == startNode.ID )
 				{
 				//	Debug.Log("We found the end node!");
-					return RetracePath( startNode, endNode );
+					return RetracePath( endNode, startNode, ref path );
 				}
 
-				if ( currentNode == null )
-					return null;
+//				if ( currentNode == null )	return null;
 
-
-				// First node is always discovered
-				closedSet.Add( currentNode );
-				openSet.Remove( currentNode );
+				currentNode.Visited = true;
 
 				// Setup its neighbours
-				foreach( IAINode iNeighbour in currentNode.Neighbours )
+				for ( int i = 0; i < currentNode.Neighbours.Length; i++ )
 				{
+					IAINode iNeighbour = currentNode.Neighbours[ i ];
 					if ( iNeighbour == null )
 					{
 						print( "node " + ( currentNode as AINode ).name + " has neighbour as null " );
-						return null;
+						return 0;
 					}
 
-					// Ignore the neighbor which is already evaluated.
-					if ( iNeighbour.IsWalkable == false || closedSet.Contains( iNeighbour ) )
+					// Ignore the neighbour which is already evaluated.
+					if ( iNeighbour.IsWalkable == false ||  iNeighbour.Visited == true )
 						continue;
 
 
 					float gCost = currentNode.gCost + ( currentNode.Position - iNeighbour.Position ).sqrMagnitude;
-					if ( gCost < iNeighbour.gCost || openSet.Contains(iNeighbour) == false )
+					bool containsNehigbour = m_OpenSet.Contains( iNeighbour );
+					if ( gCost < iNeighbour.gCost || containsNehigbour == false )
 					{
 						iNeighbour.gCost		= gCost;
-						iNeighbour.Heuristic	= ( iNeighbour.Position - endNode.Position ).sqrMagnitude;
+						iNeighbour.Heuristic	= ( iNeighbour.Position - startNode.Position ).sqrMagnitude;
 						iNeighbour.Parent		= currentNode;
 
-						if ( openSet.Contains( iNeighbour ) == false )
-							openSet.Add( iNeighbour );
+						if ( containsNehigbour == false )
+						{
+							m_OpenSet.Add( iNeighbour );
+							m_PathNodeCount ++;
+						}
 					}
 
 				}
 			}
 
 			// no path found
-			return null;
+			return 0;
 		}
 
 	}

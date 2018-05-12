@@ -162,7 +162,7 @@ public class Platform : AINode {
 		if ( m_InterpolationType == MotionType.LERPED )
 		{
 			m_InterpolantGlobal += Time.deltaTime * m_Speed * ( LERPED_DIST_MULTI / m_WaypointsPositions.Count );
-			Vector3 position = Interp( m_WaypointsPositions, m_InterpolantGlobal );
+			Vector3 position = Interp( ref m_WaypointsPositions, m_InterpolantGlobal );
 			transform.position = position;
 
 			if ( m_InterpolantGlobal >= 1f )
@@ -186,12 +186,12 @@ public class Platform : AINode {
 	}
 
 
-	private Vector3 Interp( List<Vector3> wayPoints, float t )
+	private Vector3 Interp( ref List<Vector3> wayPoints, float t )
 	{
 		int numSections = wayPoints.Count - 3;
 		int currPt = Mathf.Min(Mathf.FloorToInt(t * (float) numSections), numSections - 1);
 		float u = t * (float) numSections - (float) currPt;
-				
+		
 		Vector3 a = wayPoints[ currPt + 0 ];
 		Vector3 b = wayPoints[ currPt + 1 ];
 		Vector3 c = wayPoints[ currPt + 2 ];

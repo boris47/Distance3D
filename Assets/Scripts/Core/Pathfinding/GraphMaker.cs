@@ -155,6 +155,7 @@ namespace AI.Pathfinding
 				node.Heuristic	= 0f;
 				node.gCost		= float.MaxValue;
 				node.Parent		= null;
+				node.Visited	= false;
 			}
 		}
 
